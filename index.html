@@ -609,6 +609,25 @@
   </div>
 </div>
 
+<!-- ── Score detail modal (Nutri-Score / NOVA) ── -->
+<div class="modal-backdrop" id="score-modal" onclick="closeScoreModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-ecode" id="score-modal-grade"></div>
+        <div class="modal-title" id="score-modal-title"></div>
+        <div class="modal-subtitle" id="score-modal-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeScoreModalDirect()">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="score-modal-body"></div>
+    <div class="modal-footer">
+      <button class="modal-ask-btn" id="score-modal-ask-btn">Ask AI to explain more</button>
+      <button class="modal-dismiss-btn" onclick="closeScoreModalDirect()">Close</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   FoodGuard — built with Open Food Facts &amp; EU RASFF data · Not a substitute for official food safety advice
 </footer>
@@ -860,10 +879,10 @@ function renderProduct(p, container) {
   const ingredients = p.ingredients_text?.slice(0, 300) || 'Not available';
 
   const nutriHTML = nutri
-    ? `<span class="nutri nutri-${nutri.toLowerCase()}">Nutri-Score ${nutri}</span>`
+    ? `<span class="nutri nutri-${nutri.toLowerCase()} clickable" onclick="openScoreModal('nutri','${nutri}')" title="Tap to learn what Nutri-Score means">Nutri-Score ${nutri}</span>`
     : '';
   const novaHTML = nova
-    ? `<span class="nova nova-${nova}">NOVA ${nova}</span>`
+    ? `<span class="nova nova-${nova} clickable" onclick="openScoreModal('nova','${nova}')" title="Tap to learn what NOVA means">NOVA ${nova}</span>`
     : '';
 
   const novaLabels = {
@@ -916,6 +935,108 @@ function renderProduct(p, container) {
       </div>
     </div>
   `;
+}
+
+// ── Score modal (Nutri-Score / NOVA) ─────────────────────────────────────────
+const NUTRI_DATA = {
+  A: { colorClass:'safe',   label:'Excellent nutritional quality', summary:'This product has a very good nutritional balance — high in beneficial nutrients like protein, fibre, or fruit content, and low in sugar, salt, and saturated fat.', scale: [ {g:'A',active:true}, {g:'B'}, {g:'C'}, {g:'D'}, {g:'E'} ], aiQ:'What makes a food earn a Nutri-Score A rating?' },
+  B: { colorClass:'safe',   label:'Good nutritional quality',      summary:'A reasonably healthy choice. It scores well overall but may have a slightly elevated level of sugar, salt, or saturated fat compared to an A-rated product.', scale: [ {g:'A'}, {g:'B',active:true}, {g:'C'}, {g:'D'}, {g:'E'} ], aiQ:'What does Nutri-Score B mean and how is it calculated?' },
+  C: { colorClass:'caution',label:'Average nutritional quality',   summary:'A middle-ground product. Some positive nutritional aspects, but also notable levels of sugar, salt, or fat. Fine occasionally, but not ideal as a daily staple.', scale: [ {g:'A'}, {g:'B'}, {g:'C',active:true}, {g:'D'}, {g:'E'} ], aiQ:'What does Nutri-Score C mean for my diet?' },
+  D: { colorClass:'danger', label:'Poor nutritional quality',      summary:'This product is high in sugar, salt, saturated fat, or calories relative to its nutritional benefits. Best consumed occasionally and in small portions.', scale: [ {g:'A'}, {g:'B'}, {g:'C'}, {g:'D',active:true}, {g:'E'} ], aiQ:'What does Nutri-Score D mean and should I avoid these foods?' },
+  E: { colorClass:'danger', label:'Bad nutritional quality',       summary:'Very poor nutritional profile — high in unhealthy components with few redeeming nutrients. This is the lowest Nutri-Score rating. Limit consumption.', scale: [ {g:'A'}, {g:'B'}, {g:'C'}, {g:'D'}, {g:'E',active:true} ], aiQ:'What does Nutri-Score E mean and what foods typically get this rating?' },
+};
+
+const NOVA_DATA = {
+  1: { colorClass:'safe',   label:'Unprocessed or minimally processed', summary:'Foods in their natural state or with minimal alteration — drying, freezing, pasteurising. Nothing artificial added. Examples: fresh fruit, eggs, plain meat, milk, plain nuts.', detail:'This is the gold standard. These foods are as close to nature as possible. Eat as much of these as you like.', aiQ:'What are good examples of NOVA 1 foods and why are they the healthiest?' },
+  2: { colorClass:'safe',   label:'Processed culinary ingredients',     summary:'Substances extracted from nature and used in cooking — not eaten alone. Examples: olive oil, butter, flour, sugar, salt, honey, vinegar.', detail:'These are the building blocks of cooking. They're not harmful in themselves, but are used to prepare NOVA 1 foods. The processing is simple and functional.', aiQ:'What is the difference between NOVA 1 and NOVA 2 foods?' },
+  3: { colorClass:'caution',label:'Processed foods',                    summary:'Foods made by adding salt, sugar, oil, or other NOVA 2 ingredients to NOVA 1 foods. Examples: canned fish, cheese, cured ham, smoked meat, tinned vegetables, freshly baked bread.', detail:'Processing here serves a clear purpose — preservation, taste, or safety. These foods are fine as part of a balanced diet, but check the label for salt and sugar content.', aiQ:'What makes a food NOVA 3 and how is it different from ultra-processed?' },
+  4: { colorClass:'danger', label:'Ultra-processed foods',              summary:'Industrial formulations made mostly from cheap ingredients and additives — colours, flavours, emulsifiers, preservatives, sweeteners. They typically contain ingredients you would never find in a home kitchen.', detail:'NOVA 4 foods are designed to be hyper-palatable and long-lasting. Research links high NOVA 4 consumption to obesity, type 2 diabetes, heart disease, and some cancers. The EU public health guidance recommends minimising these.', aiQ:'Why are ultra-processed NOVA 4 foods considered harmful and what should I eat instead?' },
+};
+
+function openScoreModal(type, value) {
+  const modal    = document.getElementById('score-modal');
+  const gradeEl  = document.getElementById('score-modal-grade');
+  const titleEl  = document.getElementById('score-modal-title');
+  const subEl    = document.getElementById('score-modal-subtitle');
+  const bodyEl   = document.getElementById('score-modal-body');
+  const askBtn   = document.getElementById('score-modal-ask-btn');
+
+  if (type === 'nutri') {
+    const d = NUTRI_DATA[value];
+    if (!d) return;
+
+    // Build the A-B-C-D-E visual scale
+    const scaleColors = { A:'#038141', B:'#85bb2f', C:'#fecb02', D:'#ee8100', E:'#e63e11' };
+    const scaleHTML = d.scale.map(s => `
+      <span style="
+        display:inline-flex; align-items:center; justify-content:center;
+        width:${s.active ? '36px' : '28px'}; height:${s.active ? '36px' : '28px'};
+        border-radius:50%; background:${scaleColors[s.g]};
+        color:${s.g === 'C' ? '#333' : 'white'};
+        font-weight:800; font-size:${s.active ? '16px' : '13px'};
+        opacity:${s.active ? '1' : '0.35'};
+        transition: all .2s;
+      ">${s.g}</span>
+    `).join('');
+
+    gradeEl.textContent   = `Nutri-Score ${value}`;
+    gradeEl.className     = `modal-ecode ${d.colorClass}`;
+    titleEl.textContent   = d.label;
+    subEl.textContent     = 'EU nutritional quality rating';
+    bodyEl.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">${scaleHTML}</div>
+      <div class="modal-row"><div class="modal-row-label">What it means</div><div>${d.summary}</div></div>
+      <div class="modal-row"><div class="modal-row-label">How it works</div><div>Nutri-Score is calculated from a product's nutrients per 100g — balancing negatives (energy, sugars, saturated fat, sodium) against positives (fibre, protein, fruit &amp; vegetables). Developed in France, now recommended across the EU.</div></div>
+      <div class="modal-row"><div class="modal-row-label">Is it mandatory?</div><div>No — Nutri-Score is voluntary in the EU. Brands choose to display it. If a product doesn't show it, that itself can be informative.</div></div>
+    `;
+    askBtn.onclick = () => { closeScoreModalDirect(); prefillAI(d.aiQ); };
+
+  } else if (type === 'nova') {
+    const d = NOVA_DATA[value];
+    if (!d) return;
+
+    const novaColors = { 1:'#038141', 2:'#85bb2f', 3:'#fecb02', 4:'#e63e11' };
+    const scaleHTML = [1,2,3,4].map(n => `
+      <span style="
+        display:inline-flex; align-items:center; justify-content:center;
+        width:${n == value ? '36px' : '28px'}; height:${n == value ? '36px' : '28px'};
+        border-radius:50%; background:${novaColors[n]};
+        color:${n === 3 ? '#333' : 'white'};
+        font-weight:800; font-size:${n == value ? '16px' : '13px'};
+        opacity:${n == value ? '1' : '0.35'};
+      ">${n}</span>
+    `).join('');
+
+    gradeEl.textContent   = `NOVA ${value}`;
+    gradeEl.className     = `modal-ecode ${d.colorClass}`;
+    titleEl.textContent   = d.label;
+    subEl.textContent     = 'EU food processing classification';
+    bodyEl.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">${scaleHTML}</div>
+      <div class="modal-row"><div class="modal-row-label">What it means</div><div>${d.summary}</div></div>
+      <div class="modal-row"><div class="modal-row-label">Context</div><div>${d.detail}</div></div>
+      <div class="modal-row"><div class="modal-row-label">How it works</div><div>NOVA was developed by Brazilian researchers and classifies foods by the extent and purpose of processing — not by nutrients. It's widely used by EFSA and WHO researchers to study diet and disease.</div></div>
+    `;
+    askBtn.onclick = () => { closeScoreModalDirect(); prefillAI(d.aiQ); };
+  }
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function prefillAI(question) {
+  const aiInput = document.getElementById('ai-input');
+  aiInput.value = question;
+  aiInput.focus();
+  document.querySelector('.two-col').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function closeScoreModal(e) {
+  if (e.target === document.getElementById('score-modal')) closeScoreModalDirect();
+}
+function closeScoreModalDirect() {
+  document.getElementById('score-modal').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ── AI Assistant ─────────────────────────────────────────────────────────────
