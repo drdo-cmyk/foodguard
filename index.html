@@ -132,9 +132,9 @@
     .scanner-frame { width:72%; aspect-ratio:3/2; border:3px solid #22c55e; border-radius:10px; box-shadow:0 0 0 9999px rgba(0,0,0,.5); }
     .scanner-hint { color:#ccc; font-size:13px; text-align:center; padding:10px 18px 4px; background:#111; }
     .scanner-manual { padding:10px 18px 14px; background:#111; display:flex; gap:8px; }
-    .scanner-manual input { flex:1; padding:8px 12px; border-radius:8px; border:1px solid #444; background:#222; color:#fff; font-size:14px; outline:none; }
+    .scanner-manual input { flex:1; padding:8px 12px; border-radius:8px; border:2px solid #444; background:#222; color:#fff; font-size:14px; outline:none; transition:border-color .15s, box-shadow .15s; }
     .scanner-manual input::placeholder { color:#666; }
-    .scanner-manual input:focus { border-color:#22c55e; }
+    .scanner-manual input:focus { border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.25); }
     .scanner-manual button { padding:8px 14px; background:var(--green); color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
     .scanner-status { color:#aaa; font-size:12px; text-align:center; padding:4px 18px 12px; background:#111; min-height:28px; }
     .scanner-status.success { color:#4ade80; font-weight:600; }
@@ -662,10 +662,13 @@
     <div id="scanner-viewport">
       <div class="scanner-overlay"><div class="scanner-frame"></div></div>
     </div>
-    <div class="scanner-hint">Point camera at the barcode on the product packaging</div>
+    <div class="scanner-hint" id="scanner-hint">Point camera at the barcode — hold steady</div>
+    <div style="background:#111;padding:6px 18px;display:flex;gap:8px;justify-content:center;">
+      <button id="photo-btn" onclick="capturePhoto()" style="flex:1;padding:9px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">&#128247; Take photo of barcode</button>
+    </div>
     <div class="scanner-manual">
       <input type="text" id="barcode-input" placeholder="Or type barcode number e.g. 3017624010701" inputmode="numeric" />
-      <button onclick="lookupBarcode(document.getElementById('barcode-input').value)">Go</button>
+      <button onclick="submitManualBarcode()">Go</button>
     </div>
     <div class="scanner-status" id="scanner-status">Starting camera...</div>
   </div>
@@ -1099,6 +1102,319 @@ let scannerActive = false;
 let videoStream = null;
 let scanInterval = null;
 let zxingReader = null;
+let currentVideo = null;
+
+function setStatus(msg, type) {
+  const el = document.getElementById('scanner-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'scanner-status' + (type ? ' ' + type : '');
+}
+
+async function openScanner() {
+  document.getElementById('scanner-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('barcode-input').value = '';
+  setStatus('Starting camera...');
+  await startCamera();
+}
+
+async function startCamera() {
+  const viewport = document.getElementById('scanner-viewport');
+  const oldVideo = viewport.querySelector('video');
+  if (oldVideo) oldVideo.remove();
+  currentVideo = null;
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setStatus('Camera not supported. Use manual input below.', 'error');
+    return;
+  }
+
+  try {
+    // Request highest possible resolution for better barcode detection on curved surfaces
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    });
+
+    const video = document.createElement('video');
+    video.setAttribute('autoplay', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('muted', '');
+    video.srcObject = videoStream;
+    video.style.cssText = 'width:100%;display:block;max-height:260px;object-fit:cover;';
+
+    const overlay = viewport.querySelector('.scanner-overlay');
+    viewport.insertBefore(video, overlay);
+    await video.play();
+    currentVideo = video;
+    scannerActive = true;
+    setStatus('Auto-scanning... or tap Take Photo for curved barcodes');
+    startDecoding(video);
+
+  } catch (err) {
+    const msg = err.name === 'NotAllowedError' ? 'Camera permission denied.' :
+                err.name === 'NotFoundError'   ? 'No camera found.' :
+                'Camera error: ' + err.message;
+    setStatus(msg + ' Use manual input below.', 'error');
+  }
+}
+
+// ── Photo capture mode — best for curved surfaces like Pringles ──────────────
+function capturePhoto() {
+  if (!currentVideo || currentVideo.readyState < 2) {
+    setStatus('Camera not ready yet — wait a moment.', 'error');
+    return;
+  }
+
+  setStatus('Processing photo...');
+
+  // Capture at full video resolution — much higher quality than live frames
+  const canvas = document.createElement('canvas');
+  canvas.width  = currentVideo.videoWidth;
+  canvas.height = currentVideo.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(currentVideo, 0, 0);
+
+  // Try decoding the full image first, then try multiple crops
+  const attempts = buildCrops(canvas);
+  let found = false;
+
+  for (const attempt of attempts) {
+    const result = tryDecode(attempt);
+    if (result) {
+      found = true;
+      onBarcodeDetected(result);
+      break;
+    }
+  }
+
+  if (!found) {
+    setStatus('Could not read barcode from photo. Try better lighting, flatten product, or hold closer.', 'error');
+    setTimeout(() => setStatus('Auto-scanning... or tap Take Photo for curved barcodes'), 2500);
+  }
+}
+
+// Build multiple crops of the image to improve curved barcode detection
+function buildCrops(canvas) {
+  const crops = [canvas]; // always try full image first
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Center horizontal strip — where barcode usually is
+  const stripHeights = [0.4, 0.3, 0.5, 0.6];
+  for (const frac of stripHeights) {
+    const c = document.createElement('canvas');
+    const ch = Math.floor(h * frac);
+    const cy = Math.floor((h - ch) / 2);
+    c.width = w;
+    c.height = ch;
+    c.getContext('2d').drawImage(canvas, 0, cy, w, ch, 0, 0, w, ch);
+    crops.push(c);
+  }
+
+  // Also try contrast-enhanced version of the center strip
+  const enhanced = enhanceContrast(crops[1]);
+  crops.push(enhanced);
+
+  return crops;
+}
+
+// Simple contrast enhancement — helps with faded/curved barcodes
+function enhanceContrast(srcCanvas) {
+  const c = document.createElement('canvas');
+  c.width = srcCanvas.width;
+  c.height = srcCanvas.height;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(srcCanvas, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, c.width, c.height);
+  const data = imageData.data;
+
+  // Convert to grayscale and boost contrast
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+    // Stretch contrast: make darks darker, lights lighter
+    const boosted = gray < 128 ? Math.max(0, gray - 40) : Math.min(255, gray + 40);
+    data[i] = data[i+1] = data[i+2] = boosted;
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return c;
+}
+
+// Try to decode a barcode from a canvas element
+function tryDecode(canvas) {
+  // Native BarcodeDetector — fastest, most accurate
+  if (window._barcodeDetector) {
+    // sync not available, must use async — handled in startDecoding
+    return null;
+  }
+  // ZXing synchronous decode
+  if (window.ZXing && zxingReader) {
+    try {
+      const result = zxingReader.decodeFromCanvas(canvas);
+      if (result) return result.getText();
+    } catch(e) {}
+  }
+  return null;
+}
+
+function startDecoding(video) {
+  // Native BarcodeDetector API (Chrome/Edge Android — hardware accelerated)
+  if ('BarcodeDetector' in window) {
+    const detector = new BarcodeDetector({
+      formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','data_matrix']
+    });
+    window._barcodeDetector = detector;
+
+    // Fast scan interval — 150ms
+    scanInterval = setInterval(async () => {
+      if (!scannerActive || video.readyState < 2) return;
+      try {
+        const codes = await detector.detect(video);
+        if (codes.length > 0) onBarcodeDetected(codes[0].rawValue);
+      } catch(e) {}
+    }, 150);
+    return;
+  }
+
+  // Fallback: ZXing
+  setStatus('Loading scanner library...');
+  const tryLoad = () => {
+    if (!document.getElementById('zxing-script')) {
+      const s = document.createElement('script');
+      s.id = 'zxing-script';
+      s.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js';
+      s.onload = () => startZXing(video);
+      s.onerror = () => setStatus('Scanner library failed. Use manual input or Take Photo.', 'error');
+      document.head.appendChild(s);
+    } else if (window.ZXing) {
+      startZXing(video);
+    } else {
+      setTimeout(tryLoad, 300);
+    }
+  };
+  tryLoad();
+}
+
+function startZXing(video) {
+  try {
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.DATA_MATRIX
+    ]);
+    // TRY_HARDER makes ZXing work harder on each frame — key for curved barcodes
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    zxingReader = new ZXing.BrowserMultiFormatReader(hints);
+    const canvas = document.createElement('canvas');
+    setStatus('Auto-scanning... or tap Take Photo for curved barcodes');
+
+    // Faster interval: 150ms instead of 350ms
+    scanInterval = setInterval(() => {
+      if (!scannerActive || video.readyState < 2) return;
+      try {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+
+        // Try full frame first
+        try {
+          const result = zxingReader.decodeFromCanvas(canvas);
+          if (result) { onBarcodeDetected(result.getText()); return; }
+        } catch(e) {}
+
+        // Try center horizontal strip (40% height)
+        const stripCanvas = document.createElement('canvas');
+        const sh = Math.floor(canvas.height * 0.4);
+        const sy = Math.floor((canvas.height - sh) / 2);
+        stripCanvas.width = canvas.width;
+        stripCanvas.height = sh;
+        stripCanvas.getContext('2d').drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
+        try {
+          const result = zxingReader.decodeFromCanvas(stripCanvas);
+          if (result) { onBarcodeDetected(result.getText()); return; }
+        } catch(e) {}
+
+      } catch(e) {}
+    }, 150);
+
+  } catch(e) {
+    setStatus('Scanner unavailable. Use manual input or Take Photo.', 'error');
+  }
+}
+
+function onBarcodeDetected(code) {
+  if (!scannerActive) return;
+  scannerActive = false;
+  clearInterval(scanInterval);
+  setStatus('Detected: ' + code, 'success');
+  setTimeout(() => { closeScanner(); lookupBarcode(code); }, 700);
+}
+
+async function lookupBarcode(barcode) {
+  barcode = (barcode || '').trim().replace(/\D/g, '');
+  if (!barcode) { setStatus('Please enter a barcode number.', 'error'); return; }
+
+  const result = document.getElementById('product-result');
+  result.style.display = 'block';
+  result.innerHTML = '<div class="product-card"><div class="loading-row"><span class="spinner"></span> Looking up barcode ' + barcode + '...</div></div>';
+  result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  try {
+    const url = 'https://world.openfoodfacts.net/api/v2/product/' + barcode
+      + '?fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text';
+    const res = await fetch(url);
+
+    // Handle 404 as "not found" not as an error
+    if (res.status === 404 || res.status === 200) {
+      const data = await res.json();
+      if (data.status === 0 || !data.product || !data.product.product_name) {
+        result.innerHTML = '<div class="product-card"><div class="empty-state">'
+          + '<strong>Product not found</strong> for barcode ' + barcode + '.<br><br>'
+          + 'This product is not in the Open Food Facts database yet.<br><br>'
+          + '<a href="https://world.openfoodfacts.org/cgi/product.pl?type=add&barcode=' + barcode
+          + '" target="_blank" rel="noopener" style="color:var(--green);font-weight:600;">'
+          + 'Add it to Open Food Facts</a> — help build coverage for Croatia and Bosnia!'
+          + '</div></div>';
+        return;
+      }
+      searchedCount++;
+      document.getElementById('stat-searched').textContent = searchedCount;
+      renderProduct(data.product, result);
+    } else {
+      throw new Error('HTTP ' + res.status);
+    }
+
+  } catch(err) {
+    result.innerHTML = '<div class="product-card"><div class="empty-state">Lookup failed: ' + err.message + '</div></div>';
+  }
+}
+
+function closeScanner() {
+  scannerActive = false;
+  clearInterval(scanInterval);
+  scanInterval = null;
+  window._barcodeDetector = null;
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  if (zxingReader) { try { zxingReader.reset(); } catch(e) {} zxingReader = null; }
+  currentVideo = null;
+  const vp = document.getElementById('scanner-viewport');
+  const vid = vp.querySelector('video');
+  if (vid) vid.remove();
+  document.getElementById('scanner-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleScannerBackdropClick(e) {
+  if (e.target === document.getElementById('scanner-modal')) closeScanner();
+}
 
 function setStatus(msg, type) {
   const el = document.getElementById('scanner-status');
@@ -1270,8 +1586,19 @@ function handleScannerBackdropClick(e) {
   if (e.target === document.getElementById('scanner-modal')) closeScanner();
 }
 
+// Manual barcode entry — close modal first, then show result
+function submitManualBarcode() {
+  const val = document.getElementById('barcode-input').value.trim();
+  if (!val) {
+    setStatus('Please enter a barcode number.', 'error');
+    return;
+  }
+  closeScanner();
+  setTimeout(() => lookupBarcode(val), 250);
+}
+
 document.getElementById('barcode-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') lookupBarcode(document.getElementById('barcode-input').value);
+  if (e.key === 'Enter') submitManualBarcode();
 });
 </script>
 </body>
