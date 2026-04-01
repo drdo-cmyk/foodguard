@@ -236,6 +236,117 @@
     }
     .chip.danger { background: var(--red-l); border-color: #fca5a5; color: var(--red); }
     .chip.caution { background: var(--amber-l); border-color: #fcd34d; color: var(--amber); }
+    .chip.clickable { cursor: pointer; transition: filter .15s, transform .1s; }
+    .chip.clickable:hover { filter: brightness(.93); transform: translateY(-1px); }
+
+    /* ── Additive modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      max-width: 480px;
+      width: 100%;
+      overflow: hidden;
+      animation: modal-in .18s ease;
+    }
+    @keyframes modal-in { from { opacity:0; transform: scale(.95) translateY(8px); } to { opacity:1; transform: none; } }
+    .modal-header {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .modal-ecode {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      flex-shrink: 0;
+    }
+    .modal-ecode.danger { color: var(--red); }
+    .modal-ecode.caution { color: var(--amber); }
+    .modal-ecode.safe { color: var(--green); }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+    .modal-subtitle { font-size: 13px; color: var(--muted); }
+    .modal-close {
+      margin-left: auto;
+      background: var(--gray-l);
+      border: none;
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--muted);
+      line-height: 1;
+    }
+    .modal-close:hover { background: var(--border); }
+    .modal-body { padding: 20px 22px; }
+    .modal-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .modal-row-label {
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      width: 90px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .modal-status-pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .modal-status-pill.approved { background: var(--green-l); color: var(--green); }
+    .modal-status-pill.restricted { background: var(--amber-l); color: var(--amber); }
+    .modal-status-pill.banned { background: var(--red-l); color: var(--red); }
+    .modal-footer {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+    .modal-ask-btn {
+      flex: 1;
+      padding: 9px 16px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal-ask-btn:hover { opacity: .88; }
+    .modal-dismiss-btn {
+      padding: 9px 16px;
+      background: var(--gray-l);
+      color: var(--gray);
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
 
     .sub-label {
       font-size: 12px;
@@ -462,6 +573,42 @@
 
 </main>
 
+<!-- ── Additive detail modal ── -->
+<div class="modal-backdrop" id="additive-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-ecode" id="modal-ecode"></div>
+        <div class="modal-title" id="modal-name"></div>
+        <div class="modal-subtitle" id="modal-category"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <div class="modal-row-label">Purpose</div>
+        <div id="modal-purpose"></div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">EU status</div>
+        <div id="modal-status"></div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">Why flagged</div>
+        <div id="modal-reason"></div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-row-label">Found in</div>
+        <div id="modal-foundin"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-ask-btn" id="modal-ask-btn">Ask AI to explain more</button>
+      <button class="modal-dismiss-btn" onclick="closeModalDirect()">Close</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   FoodGuard — built with Open Food Facts &amp; EU RASFF data · Not a substitute for official food safety advice
 </footer>
@@ -473,15 +620,113 @@ const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
 
 // Additives flagged as controversial (E-numbers)
 const RISKY_ADDITIVES = new Set([
-  'en:e102','en:e104','en:e110','en:e122','en:e124','en:e129', // azo dyes
-  'en:e211','en:e212','en:e213',                                // benzoates
-  'en:e320','en:e321',                                          // BHA/BHT
-  'en:e621','en:e627','en:e631','en:e635',                      // glutamates
-  'en:e950','en:e951','en:e952','en:e954','en:e955','en:e960'   // sweeteners
+  'en:e102','en:e104','en:e110','en:e122','en:e124','en:e129',
+  'en:e211','en:e212','en:e213',
+  'en:e320','en:e321',
+  'en:e621','en:e627','en:e631','en:e635',
+  'en:e950','en:e951','en:e952','en:e954','en:e955','en:e960'
 ]);
 const CAUTION_ADDITIVES = new Set([
   'en:e202','en:e407','en:e412','en:e415','en:e471','en:e476','en:e481'
 ]);
+
+// ── Additive database ─────────────────────────────────────────────────────────
+const ADDITIVE_DB = {
+  'e102': { name:'Tartrazine', category:'Colour', purpose:'Yellow colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'EU mandates "may have an adverse effect on activity and attention in children" on packaging. Linked to hyperactivity in some studies.', foundIn:'Soft drinks, sweets, crisps, pickles, mustard', risk:'danger' },
+  'e104': { name:'Quinoline Yellow', category:'Colour', purpose:'Greenish-yellow colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Part of the "Southampton Six" azo dyes. EU requires hyperactivity warning on products containing it.', foundIn:'Smoked fish, scotch eggs, some soft drinks', risk:'danger' },
+  'e110': { name:'Sunset Yellow FCF', category:'Colour', purpose:'Orange-yellow colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six dye. Associated with hyperactivity in children. Banned in Norway and Finland.', foundIn:'Orange squash, apricot jam, lemon curd, sweets', risk:'danger' },
+  'e122': { name:'Carmoisine', category:'Colour', purpose:'Red colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in several non-EU countries. Potential allergen for aspirin-sensitive individuals.', foundIn:'Jams, sweets, marzipan, glacé cherries', risk:'danger' },
+  'e124': { name:'Ponceau 4R', category:'Colour', purpose:'Red colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in USA, Norway and Finland. Linked to hyperactivity.', foundIn:'Canned strawberries, seafood dressing, tinned fruit', risk:'danger' },
+  'e129': { name:'Allura Red AC', category:'Colour', purpose:'Red-orange colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in Denmark, Belgium, France, Germany, Switzerland. Linked to hyperactivity in children.', foundIn:'Soft drinks, sweets, cereal, energy drinks', risk:'danger' },
+  'e211': { name:'Sodium Benzoate', category:'Preservative', purpose:'Prevents mould and bacteria growth', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'When combined with vitamin C (E300), can form benzene — a known carcinogen. Linked to hyperactivity in children.', foundIn:'Fizzy drinks, fruit juices, pickles, sauces', risk:'danger' },
+  'e212': { name:'Potassium Benzoate', category:'Preservative', purpose:'Prevents mould and bacteria growth', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Same concerns as E211. Can form benzene when combined with ascorbic acid.', foundIn:'Soft drinks, pickles, olives', risk:'danger' },
+  'e213': { name:'Calcium Benzoate', category:'Preservative', purpose:'Prevents mould and bacteria growth', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Benzoate family — benzene-formation concern. May trigger reactions in aspirin-sensitive individuals.', foundIn:'Margarine, soft drinks, fruit products', risk:'danger' },
+  'e320': { name:'BHA', category:'Antioxidant', purpose:'Prevents fats from going rancid', euStatusLabel:'Approved with strict limits (EU)', euStatus:'restricted', flagReason:'Classified as a possible human carcinogen (Group 2B) by IARC. Banned in Japan. California lists it as a known carcinogen.', foundIn:'Crisps, lard, butter, cereal, chewing gum, instant noodles', risk:'danger' },
+  'e321': { name:'BHT', category:'Antioxidant', purpose:'Prevents fats from going rancid', euStatusLabel:'Approved with limits (EU)', euStatus:'approved', flagReason:'Some animal studies suggest endocrine disruption. Under review by EFSA. Banned in some countries.', foundIn:'Cereals, chewing gum, stock cubes, instant mashed potato', risk:'danger' },
+  'e621': { name:'MSG (Monosodium Glutamate)', category:'Flavour enhancer', purpose:'Enhances savoury/umami taste', euStatusLabel:'Approved in EU — safe per EFSA', euStatus:'approved', flagReason:'Historically controversial. EFSA found it safe at normal doses, but high doses may cause symptoms in sensitive individuals.', foundIn:'Crisps, instant noodles, ready meals, fast food', risk:'danger' },
+  'e627': { name:'Disodium Guanylate', category:'Flavour enhancer', purpose:'Amplifies MSG effect', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Often used alongside MSG to multiply its effect. Not suitable for gout sufferers or infants.', foundIn:'Instant noodles, crisps, soups, sauces', risk:'danger' },
+  'e631': { name:'Disodium Inosinate', category:'Flavour enhancer', purpose:'Amplifies MSG effect', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Works with E627 to enhance MSG effect. Not suitable for gout sufferers. Often derived from meat or fish — not vegetarian.', foundIn:'Crisps, instant noodles, ready meals', risk:'danger' },
+  'e635': { name:'Disodium 5-Ribonucleotides', category:'Flavour enhancer', purpose:'Combined MSG amplifier', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Mixture of E627+E631. Not suitable for gout sufferers, infants, or those on low-purine diets. Not vegetarian.', foundIn:'Crisps, snacks, instant soups', risk:'danger' },
+  'e950': { name:'Acesulfame K', category:'Sweetener', purpose:'~200× sweeter than sugar', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Some animal studies raised cancer concerns, though EFSA considers it safe. Often combined with other sweeteners.', foundIn:'Diet drinks, sugar-free sweets, chewing gum, yoghurt', risk:'danger' },
+  'e951': { name:'Aspartame', category:'Sweetener', purpose:'~200× sweeter than sugar', euStatusLabel:'Approved in EU — IARC Group 2B (possibly carcinogenic, 2023)', euStatus:'restricted', flagReason:'IARC 2023: classified as possible carcinogen. Must carry phenylketonuria warning. Highly controversial — ongoing scientific debate.', foundIn:'Diet Coke, sugar-free yoghurt, chewing gum, medicines', risk:'danger' },
+  'e952': { name:'Cyclamate', category:'Sweetener', purpose:'~30-50× sweeter than sugar', euStatusLabel:'Approved in EU — BANNED in USA since 1969', euStatus:'restricted', flagReason:'Banned in the US due to bladder cancer concerns in animal studies. EU still permits it.', foundIn:'Table-top sweeteners, diet drinks, canned fruit', risk:'danger' },
+  'e954': { name:'Saccharin', category:'Sweetener', purpose:'~300× sweeter than sugar, oldest artificial sweetener', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Formerly carried cancer warning in USA (removed in 2000). Some research links it to gut microbiome disruption.', foundIn:'Table-top sweeteners, diet drinks, toothpaste', risk:'danger' },
+  'e955': { name:'Sucralose', category:'Sweetener', purpose:'~600× sweeter than sugar', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'2023 study found possible DNA-damaging compound in gut. EFSA currently reviewing.', foundIn:'Diet drinks, protein bars, sugar-free products', risk:'danger' },
+  'e960': { name:'Steviol Glycosides (Stevia)', category:'Sweetener', purpose:'Natural-origin plant sweetener', euStatusLabel:'Approved in EU since 2011', euStatus:'approved', flagReason:'Generally safe, but may interact with blood pressure/diabetes medication at high doses.', foundIn:'Diet drinks, yoghurts, health bars, table-top sweeteners', risk:'danger' },
+  'e202': { name:'Potassium Sorbate', category:'Preservative', purpose:'Prevents mould in food and drink', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Generally safe, but some individuals report skin irritation. Can inhibit beneficial gut bacteria at high doses.', foundIn:'Cheese, wine, dried fruit, yoghurt, margarine', risk:'caution' },
+  'e407': { name:'Carrageenan', category:'Thickener / Stabiliser', purpose:'Thickens and stabilises texture', euStatusLabel:'Approved in EU — banned in infant formula', euStatus:'restricted', flagReason:'Some animal studies link it to gut inflammation. EU has banned it from infant formula as a precaution.', foundIn:'Chocolate milk, cream, processed meat', risk:'caution' },
+  'e412': { name:'Guar Gum', category:'Thickener', purpose:'Thickens and binds food texture', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Generally safe, but high doses can cause bloating, gas, and diarrhoea. Rare allergic reactions reported.', foundIn:'Ice cream, sauces, gluten-free bread, soups', risk:'caution' },
+  'e415': { name:'Xanthan Gum', category:'Thickener / Stabiliser', purpose:'Thickens and prevents separation', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Safe for most people, but can cause digestive discomfort in large amounts.', foundIn:'Salad dressings, gluten-free products, sauces, ice cream', risk:'caution' },
+  'e471': { name:'Mono- and Diglycerides of Fatty Acids', category:'Emulsifier', purpose:'Keeps water and oil mixed together', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'May contain trans fats depending on production method. Can be animal-derived — not always vegetarian/vegan.', foundIn:'Bread, margarine, ice cream, peanut butter, biscuits', risk:'caution' },
+  'e476': { name:'PGPR', category:'Emulsifier', purpose:'Reduces viscosity in chocolate', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Often used to replace expensive cocoa butter. Some concern about long-term effects at high consumption.', foundIn:'Chocolate, chocolate-coated products', risk:'caution' },
+  'e481': { name:'Sodium Stearoyl Lactylate', category:'Emulsifier', purpose:'Improves texture in baked goods', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Safe, but may be animal-derived. Not always suitable for vegans.', foundIn:'Bread, cakes, biscuits, pastry', risk:'caution' },
+};
+
+function getAdditiveInfo(eCode) {
+  const key = eCode.replace('en:','').toLowerCase();
+  return ADDITIVE_DB[key] || null;
+}
+
+// ── Modal open/close ──────────────────────────────────────────────────────────
+function openAdditiveModal(eCode) {
+  const info = getAdditiveInfo(eCode);
+  const displayCode = eCode.replace('en:','').toUpperCase();
+
+  const ecodeEl   = document.getElementById('modal-ecode');
+  const nameEl    = document.getElementById('modal-name');
+  const catEl     = document.getElementById('modal-category');
+  const purposeEl = document.getElementById('modal-purpose');
+  const statusEl  = document.getElementById('modal-status');
+  const reasonEl  = document.getElementById('modal-reason');
+  const foundInEl = document.getElementById('modal-foundin');
+  const askBtn    = document.getElementById('modal-ask-btn');
+
+  if (info) {
+    ecodeEl.textContent    = displayCode;
+    ecodeEl.className      = `modal-ecode ${info.risk}`;
+    nameEl.textContent     = info.name;
+    catEl.textContent      = info.category;
+    purposeEl.textContent  = info.purpose;
+    statusEl.innerHTML     = `<span class="modal-status-pill ${info.euStatus === 'approved' ? 'approved' : 'restricted'}">${info.euStatusLabel}</span>`;
+    reasonEl.textContent   = info.flagReason;
+    foundInEl.textContent  = info.foundIn;
+    askBtn.onclick = () => {
+      closeModalDirect();
+      const aiInput = document.getElementById('ai-input');
+      aiInput.value = `Tell me more about ${info.name} (${displayCode}) — is it safe for everyday consumption?`;
+      aiInput.focus();
+      document.querySelector('.two-col').scrollIntoView({ behavior:'smooth', block:'center' });
+    };
+  } else {
+    ecodeEl.textContent   = displayCode;
+    ecodeEl.className     = 'modal-ecode safe';
+    nameEl.textContent    = 'Food additive';
+    catEl.textContent     = 'Not in local database — tap Ask AI for details';
+    purposeEl.textContent = 'This additive is approved for use in the EU.';
+    statusEl.innerHTML    = '<span class="modal-status-pill approved">Approved in EU</span>';
+    reasonEl.textContent  = 'Not specifically flagged — considered low concern.';
+    foundInEl.textContent = 'Varies by product.';
+    askBtn.onclick = () => {
+      closeModalDirect();
+      const aiInput = document.getElementById('ai-input');
+      aiInput.value = `What is ${displayCode}? Is it safe? What foods is it commonly found in?`;
+      aiInput.focus();
+      document.querySelector('.two-col').scrollIntoView({ behavior:'smooth', block:'center' });
+    };
+  }
+
+  document.getElementById('additive-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('additive-modal')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('additive-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
 
 let searchedCount = 0;
 
@@ -656,9 +901,9 @@ function renderProduct(p, container) {
       ${additives.length ? `
         <div class="sub-label">Additives (E-numbers)</div>
         <div class="chip-list">
-          ${riskyOnes.map(a => `<span class="chip danger">${a.replace('en:','').toUpperCase()} ⚠</span>`).join('')}
-          ${cautionOnes.map(a => `<span class="chip caution">${a.replace('en:','').toUpperCase()}</span>`).join('')}
-          ${safeOnes.map(a => `<span class="chip">${a.replace('en:','').toUpperCase()}</span>`).join('')}
+          ${riskyOnes.map(a => { const info = getAdditiveInfo(a); const code = a.replace('en:','').toUpperCase(); const label = info ? `${code} · ${info.name}` : `${code} ⚠`; return `<span class="chip danger clickable" onclick="openAdditiveModal('${a}')" title="Tap for details">${label} ⚠</span>`; }).join('')}
+          ${cautionOnes.map(a => { const info = getAdditiveInfo(a); const code = a.replace('en:','').toUpperCase(); const label = info ? `${code} · ${info.name}` : code; return `<span class="chip caution clickable" onclick="openAdditiveModal('${a}')" title="Tap for details">${label}</span>`; }).join('')}
+          ${safeOnes.map(a => { const info = getAdditiveInfo(a); const code = a.replace('en:','').toUpperCase(); const label = info ? `${code} · ${info.name}` : code; return `<span class="chip clickable" onclick="openAdditiveModal('${a}')" title="Tap for details">${label}</span>`; }).join('')}
         </div>
         ${riskyOnes.length ? `<div style="font-size:12px;color:var(--red);margin-top:6px;">⚠ ${riskyOnes.length} additive(s) flagged as controversial in EU consumer groups</div>` : ''}
       ` : ''}
