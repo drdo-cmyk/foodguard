@@ -5,602 +5,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FoodGuard — EU Food Safety</title>
   <style>
-    /* ── Reset & base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --green:   #1a7a4a;
-      --green-l: #e8f5ee;
-      --amber:   #b45309;
-      --amber-l: #fef3c7;
-      --red:     #b91c1c;
-      --red-l:   #fee2e2;
-      --blue:    #1d4ed8;
-      --blue-l:  #eff6ff;
-      --gray:    #374151;
-      --gray-l:  #f3f4f6;
-      --border:  #e5e7eb;
-      --text:    #111827;
-      --muted:   #6b7280;
-      --white:   #ffffff;
-      --radius:  10px;
-      --shadow:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --green:#1a7a4a; --green-l:#e8f5ee; --amber:#b45309; --amber-l:#fef3c7;
+      --red:#b91c1c; --red-l:#fee2e2; --blue:#1d4ed8; --blue-l:#eff6ff;
+      --gray:#374151; --gray-l:#f3f4f6; --border:#e5e7eb; --text:#111827;
+      --muted:#6b7280; --white:#ffffff; --radius:10px;
+      --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
     }
-
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f9fafb;
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    /* ── Header ── */
-    header {
-      background: var(--white);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      height: 60px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .logo { font-size: 20px; font-weight: 700; color: var(--green); letter-spacing: -.5px; }
-    .logo span { color: var(--text); font-weight: 400; font-size: 14px; margin-left: 6px; opacity: .6; }
-    .eu-badge {
-      margin-left: auto;
-      background: var(--blue-l);
-      color: var(--blue);
-      font-size: 12px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 20px;
-    }
-
-    /* ── Layout ── */
-    main { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
-
-    /* ── Section titles ── */
-    .section-title {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title .dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--green);
-      display: inline-block;
-    }
-    .section-title .dot.red   { background: var(--red); }
-    .section-title .dot.amber { background: var(--amber); }
-
-    /* ── Search bar ── */
-    .search-wrap {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 36px;
-      box-shadow: var(--shadow);
-    }
-    .search-row {
-      display: flex;
-      gap: 10px;
-    }
-    .search-row input {
-      flex: 1;
-      padding: 10px 16px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
-      outline: none;
-      transition: border-color .15s;
-    }
-    .search-row input:focus { border-color: var(--green); }
-    .search-row button {
-      padding: 10px 22px;
-      background: var(--green);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity .15s;
-    }
-    .search-row button:hover { opacity: .88; }
-    .search-hint { font-size: 13px; color: var(--muted); margin-top: 10px; }
-
-    /* ── Grid layout for two columns ── */
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-bottom: 36px;
-    }
-    @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
-
-    /* ── Cards ── */
-    .card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .card-head {
-      padding: 16px 20px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    .card-body { padding: 0; }
-
-    /* ── Alert list ── */
-    .alert-item {
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      transition: background .1s;
-    }
-    .alert-item:last-child { border-bottom: none; }
-    .alert-item:hover { background: var(--gray-l); }
-
-    .badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
-      flex-shrink: 0;
-      text-transform: uppercase;
-    }
-    .badge.alert   { background: var(--red-l);   color: var(--red); }
-    .badge.warning { background: var(--amber-l); color: var(--amber); }
-    .badge.info    { background: var(--blue-l);  color: var(--blue); }
-
-    .alert-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
-    .alert-meta  { font-size: 12px; color: var(--muted); }
-
-    /* ── Product result ── */
-    .product-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px;
-      margin-bottom: 36px;
-    }
-    .product-header {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
-      align-items: flex-start;
-    }
-    .product-img {
-      width: 90px; height: 90px;
-      object-fit: contain;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--gray-l);
-      flex-shrink: 0;
-    }
-    .product-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-    .product-brand { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
-
-    /* Nutri-Score pill */
-    .nutri {
-      display: inline-block;
-      padding: 3px 12px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 700;
-      color: white;
-      margin-right: 6px;
-    }
-    .nutri-a { background: #038141; }
-    .nutri-b { background: #85bb2f; }
-    .nutri-c { background: #fecb02; color: #333; }
-    .nutri-d { background: #ee8100; }
-    .nutri-e { background: #e63e11; }
-
-    /* Nova group */
-    .nova {
-      display: inline-block;
-      padding: 3px 12px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 700;
-      color: white;
-    }
-    .nova-1 { background: #038141; }
-    .nova-2 { background: #85bb2f; }
-    .nova-3 { background: #fecb02; color: #333; }
-    .nova-4 { background: #e63e11; }
-
-    /* Ingredient/additive chips */
-    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .chip {
-      font-size: 12px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: var(--gray-l);
-      color: var(--gray);
-    }
-    .chip.danger { background: var(--red-l); border-color: #fca5a5; color: var(--red); }
-    .chip.caution { background: var(--amber-l); border-color: #fcd34d; color: var(--amber); }
-    .chip.clickable { cursor: pointer; transition: filter .15s, transform .1s; }
-    .chip.clickable:hover { filter: brightness(.93); transform: translateY(-1px); }
-
-    /* ── Additive modal ── */
-    .modal-backdrop {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.45);
-      z-index: 500;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-backdrop.open { display: flex; }
-    .modal {
-      background: var(--white);
-      border-radius: 14px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.2);
-      max-width: 480px;
-      width: 100%;
-      overflow: hidden;
-      animation: modal-in .18s ease;
-    }
-    @keyframes modal-in { from { opacity:0; transform: scale(.95) translateY(8px); } to { opacity:1; transform: none; } }
-    .modal-header {
-      padding: 20px 22px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-    }
-    .modal-ecode {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -.5px;
-      flex-shrink: 0;
-    }
-    .modal-ecode.danger { color: var(--red); }
-    .modal-ecode.caution { color: var(--amber); }
-    .modal-ecode.safe { color: var(--green); }
-    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
-    .modal-subtitle { font-size: 13px; color: var(--muted); }
-    .modal-close {
-      margin-left: auto;
-      background: var(--gray-l);
-      border: none;
-      border-radius: 50%;
-      width: 30px; height: 30px;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      color: var(--muted);
-      line-height: 1;
-    }
-    .modal-close:hover { background: var(--border); }
-    .modal-body { padding: 20px 22px; }
-    .modal-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 14px;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    .modal-row-label {
-      font-weight: 600;
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      width: 90px;
-      flex-shrink: 0;
-      padding-top: 1px;
-    }
-    .modal-status-pill {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .modal-status-pill.approved { background: var(--green-l); color: var(--green); }
-    .modal-status-pill.restricted { background: var(--amber-l); color: var(--amber); }
-    .modal-status-pill.banned { background: var(--red-l); color: var(--red); }
-    .modal-footer {
-      padding: 14px 22px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 10px;
-    }
-    .modal-ask-btn {
-      flex: 1;
-      padding: 9px 16px;
-      background: var(--green);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .modal-ask-btn:hover { opacity: .88; }
-    .modal-dismiss-btn {
-      padding: 9px 16px;
-      background: var(--gray-l);
-      color: var(--gray);
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .sub-label {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--muted);
-      margin-bottom: 6px;
-      margin-top: 16px;
-    }
-
-    /* AI panel */
-    .ai-panel {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px;
-      margin-bottom: 36px;
-    }
-    .ai-messages { min-height: 80px; margin-bottom: 14px; }
-    .ai-msg {
-      background: var(--green-l);
-      border-left: 3px solid var(--green);
-      padding: 12px 16px;
-      border-radius: 0 8px 8px 0;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 10px;
-      white-space: pre-wrap;
-    }
-    .ai-msg.user-msg {
-      background: var(--blue-l);
-      border-left-color: var(--blue);
-    }
-    .ai-input-row { display: flex; gap: 10px; }
-    .ai-input-row input {
-      flex: 1;
-      padding: 9px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-    }
-    .ai-input-row input:focus { border-color: var(--green); }
-    .ai-input-row button {
-      padding: 9px 18px;
-      background: var(--green);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .ai-input-row button:disabled { opacity: .5; cursor: not-allowed; }
-
-    /* Loading spinner */
-    .spinner {
-      display: inline-block;
-      width: 16px; height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--green);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-row { display: flex; align-items: center; padding: 16px 20px; color: var(--muted); font-size: 14px; }
-    .empty-state { padding: 24px 20px; color: var(--muted); font-size: 14px; text-align: center; }
-
-    /* Stats bar */
-    .stats-bar {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
-    .stat-box {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 22px;
-      flex: 1;
-      min-width: 130px;
-      box-shadow: var(--shadow);
-    }
-    .stat-num { font-size: 26px; font-weight: 800; color: var(--green); }
-    .stat-num.red { color: var(--red); }
-    .stat-num.amber { color: var(--amber); }
-    .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-    /* RASFF embed section */
-    .rasff-embed {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      margin-bottom: 36px;
-    }
-    .rasff-embed iframe {
-      width: 100%;
-      border: none;
-      display: block;
-    }
-
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 24px;
-      font-size: 12px;
-      color: var(--muted);
-      border-top: 1px solid var(--border);
-      margin-top: 20px;
-    }
+    body { font-family:system-ui,-apple-system,sans-serif; background:#f9fafb; color:var(--text); line-height:1.6; }
+    header { background:var(--white); border-bottom:1px solid var(--border); padding:0 24px; display:flex; align-items:center; gap:12px; height:60px; position:sticky; top:0; z-index:100; }
+    .logo { font-size:20px; font-weight:700; color:var(--green); letter-spacing:-.5px; }
+    .logo span { color:var(--text); font-weight:400; font-size:14px; margin-left:6px; opacity:.6; }
+    .eu-badge { margin-left:auto; background:var(--blue-l); color:var(--blue); font-size:12px; font-weight:600; padding:3px 10px; border-radius:20px; }
+    main { max-width:1100px; margin:0 auto; padding:32px 20px; }
+    .section-title { font-size:18px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .section-title .dot { width:10px; height:10px; border-radius:50%; background:var(--green); display:inline-block; }
+    .section-title .dot.red { background:var(--red); }
+    .section-title .dot.amber { background:var(--amber); }
+    .search-wrap { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:36px; box-shadow:var(--shadow); }
+    .search-row { display:flex; gap:10px; }
+    .search-row input { flex:1; padding:10px 16px; border:1px solid var(--border); border-radius:8px; font-size:15px; outline:none; transition:border-color .15s; }
+    .search-row input:focus { border-color:var(--green); }
+    .search-row button { padding:10px 22px; background:var(--green); color:white; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; transition:opacity .15s; }
+    .search-row button:hover { opacity:.88; }
+    .search-hint { font-size:13px; color:var(--muted); margin-top:10px; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:36px; }
+    @media (max-width:720px) { .two-col { grid-template-columns:1fr; } }
+    .card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+    .card-head { padding:16px 20px 12px; border-bottom:1px solid var(--border); }
+    .card-body { padding:0; }
+    .alert-item { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:flex-start; transition:background .1s; }
+    .alert-item:last-child { border-bottom:none; }
+    .alert-item:hover { background:var(--gray-l); }
+    .badge { font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; text-transform:uppercase; }
+    .badge.alert { background:var(--red-l); color:var(--red); }
+    .badge.warning { background:var(--amber-l); color:var(--amber); }
+    .badge.info { background:var(--blue-l); color:var(--blue); }
+    .alert-title { font-size:14px; font-weight:600; margin-bottom:3px; }
+    .alert-meta { font-size:12px; color:var(--muted); }
+    .product-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px; margin-bottom:36px; }
+    .product-header { display:flex; gap:20px; margin-bottom:20px; align-items:flex-start; }
+    .product-img { width:90px; height:90px; object-fit:contain; border:1px solid var(--border); border-radius:8px; background:var(--gray-l); flex-shrink:0; }
+    .product-name { font-size:18px; font-weight:700; margin-bottom:4px; }
+    .product-brand { font-size:14px; color:var(--muted); margin-bottom:10px; }
+    .nutri { display:inline-block; padding:3px 12px; border-radius:20px; font-size:13px; font-weight:700; color:white; margin-right:6px; }
+    .nutri-a{background:#038141} .nutri-b{background:#85bb2f} .nutri-c{background:#fecb02;color:#333} .nutri-d{background:#ee8100} .nutri-e{background:#e63e11}
+    .nova { display:inline-block; padding:3px 12px; border-radius:20px; font-size:13px; font-weight:700; color:white; }
+    .nova-1{background:#038141} .nova-2{background:#85bb2f} .nova-3{background:#fecb02;color:#333} .nova-4{background:#e63e11}
+    .chip-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+    .chip { font-size:12px; padding:3px 10px; border-radius:20px; border:1px solid var(--border); background:var(--gray-l); color:var(--gray); }
+    .chip.danger { background:var(--red-l); border-color:#fca5a5; color:var(--red); }
+    .chip.caution { background:var(--amber-l); border-color:#fcd34d; color:var(--amber); }
+    .chip.clickable { cursor:pointer; transition:filter .15s,transform .1s; }
+    .chip.clickable:hover { filter:brightness(.93); transform:translateY(-1px); }
+    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:500; align-items:center; justify-content:center; padding:20px; }
+    .modal-backdrop.open { display:flex; }
+    .modal { background:var(--white); border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.2); max-width:480px; width:100%; overflow:hidden; animation:modal-in .18s ease; }
+    @keyframes modal-in { from{opacity:0;transform:scale(.95) translateY(8px)} to{opacity:1;transform:none} }
+    .modal-header { padding:20px 22px 16px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:14px; }
+    .modal-ecode { font-size:22px; font-weight:800; letter-spacing:-.5px; flex-shrink:0; }
+    .modal-ecode.danger{color:var(--red)} .modal-ecode.caution{color:var(--amber)} .modal-ecode.safe{color:var(--green)}
+    .modal-title { font-size:17px; font-weight:700; margin-bottom:3px; }
+    .modal-subtitle { font-size:13px; color:var(--muted); }
+    .modal-close { margin-left:auto; background:var(--gray-l); border:none; border-radius:50%; width:30px; height:30px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--muted); }
+    .modal-close:hover { background:var(--border); }
+    .modal-body { padding:20px 22px; }
+    .modal-row { display:flex; gap:10px; margin-bottom:14px; font-size:14px; line-height:1.5; }
+    .modal-row-label { font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; width:90px; flex-shrink:0; padding-top:1px; }
+    .modal-status-pill { display:inline-block; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+    .modal-status-pill.approved{background:var(--green-l);color:var(--green)} .modal-status-pill.restricted{background:var(--amber-l);color:var(--amber)}
+    .modal-footer { padding:14px 22px; border-top:1px solid var(--border); display:flex; gap:10px; }
+    .modal-ask-btn { flex:1; padding:9px 16px; background:var(--green); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+    .modal-ask-btn:hover { opacity:.88; }
+    .modal-dismiss-btn { padding:9px 16px; background:var(--gray-l); color:var(--gray); border:none; border-radius:8px; font-size:14px; cursor:pointer; }
+    .sub-label { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:6px; margin-top:16px; }
+    .ai-panel { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px; margin-bottom:36px; }
+    .ai-messages { min-height:80px; margin-bottom:14px; }
+    .ai-msg { background:var(--green-l); border-left:3px solid var(--green); padding:12px 16px; border-radius:0 8px 8px 0; font-size:14px; line-height:1.6; margin-bottom:10px; white-space:pre-wrap; }
+    .ai-msg.user-msg { background:var(--blue-l); border-left-color:var(--blue); }
+    .ai-input-row { display:flex; gap:10px; }
+    .ai-input-row input { flex:1; padding:9px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; outline:none; }
+    .ai-input-row input:focus { border-color:var(--green); }
+    .ai-input-row button { padding:9px 18px; background:var(--green); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+    .ai-input-row button:disabled { opacity:.5; cursor:not-allowed; }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--green); border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:6px; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .loading-row { display:flex; align-items:center; padding:16px 20px; color:var(--muted); font-size:14px; }
+    .empty-state { padding:24px 20px; color:var(--muted); font-size:14px; text-align:center; }
+    .stats-bar { display:flex; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+    .stat-box { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:16px 22px; flex:1; min-width:130px; box-shadow:var(--shadow); }
+    .stat-num { font-size:26px; font-weight:800; color:var(--green); }
+    .stat-num.red{color:var(--red)} .stat-num.amber{color:var(--amber)}
+    .stat-label { font-size:12px; color:var(--muted); margin-top:2px; }
+    .rasff-embed { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:36px; }
+    .rasff-embed iframe { width:100%; border:none; display:block; }
+    footer { text-align:center; padding:24px; font-size:12px; color:var(--muted); border-top:1px solid var(--border); margin-top:20px; }
   </style>
 </head>
 <body>
 
 <header>
   <div class="logo">FoodGuard <span>EU Food Safety Dashboard</span></div>
-  <div class="eu-badge">🇪🇺 EU Data</div>
+  <div class="eu-badge">&#x1F1EA;&#x1F1FA; EU Data</div>
 </header>
 
 <main>
-
-  <!-- ── Stats bar ── -->
   <div class="stats-bar">
-    <div class="stat-box">
-      <div class="stat-num red" id="stat-alerts">—</div>
-      <div class="stat-label">Active EU Alerts (2024)</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num amber" id="stat-products">4M+</div>
-      <div class="stat-label">Products in database</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="stat-countries">27</div>
-      <div class="stat-label">EU member states covered</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="stat-searched">0</div>
-      <div class="stat-label">Products searched today</div>
-    </div>
+    <div class="stat-box"><div class="stat-num red" id="stat-alerts">—</div><div class="stat-label">Active EU Alerts (2024)</div></div>
+    <div class="stat-box"><div class="stat-num amber" id="stat-products">4M+</div><div class="stat-label">Products in database</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-countries">27</div><div class="stat-label">EU member states covered</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-searched">0</div><div class="stat-label">Products searched today</div></div>
   </div>
 
-  <!-- ── Product search ── -->
   <div class="search-wrap">
-    <div class="section-title" style="margin-bottom:14px;">
-      <span class="dot"></span> Search any food product
-    </div>
+    <div class="section-title" style="margin-bottom:14px;"><span class="dot"></span> Search any food product</div>
     <div class="search-row">
-      <input type="text" id="search-input" placeholder="e.g. Nutella, Coca-Cola, Milka chocolate…" />
+      <input type="text" id="search-input" placeholder="e.g. Nutella, Coca-Cola, Milka chocolate..." />
       <button onclick="searchProduct()">Search</button>
     </div>
-    <div class="search-hint">
-      Powered by Open Food Facts — 4 million+ products from 150 countries. Try a brand name or product name.
-    </div>
+    <div class="search-hint">Powered by Open Food Facts — 4 million+ products from 150 countries.</div>
   </div>
 
-  <!-- ── Product result (hidden until search) ── -->
   <div id="product-result" style="display:none;"></div>
 
-  <!-- ── Two column: Alerts + AI ── -->
   <div class="two-col">
-
-    <!-- EU Alerts -->
     <div>
-      <div class="section-title">
-        <span class="dot red"></span> Live EU Food Alerts
-      </div>
+      <div class="section-title"><span class="dot red"></span> Live EU Food Alerts</div>
       <div class="card">
-        <div class="card-head">
-          <div style="font-size:13px; color:var(--muted);">
-            Via RASFF — EU Rapid Alert System for Food &amp; Feed
-          </div>
-        </div>
-        <div class="card-body" id="alerts-list">
-          <div class="loading-row"><span class="spinner"></span> Loading EU alerts…</div>
-        </div>
+        <div class="card-head"><div style="font-size:13px;color:var(--muted);">Via RASFF — EU Rapid Alert System for Food &amp; Feed</div></div>
+        <div class="card-body" id="alerts-list"><div class="loading-row"><span class="spinner"></span> Loading...</div></div>
       </div>
     </div>
-
-    <!-- AI Assistant -->
     <div>
-      <div class="section-title">
-        <span class="dot amber"></span> Ask the AI assistant
-      </div>
+      <div class="section-title"><span class="dot amber"></span> Ask the AI assistant</div>
       <div class="ai-panel">
         <div class="ai-messages" id="ai-messages">
-          <div class="ai-msg">
-            Hi! I'm your EU food safety assistant. Ask me anything — about ingredients, additives, allergens, what a recall means, or whether a product is safe. Try: <em>"What is E621?"</em> or <em>"What foods are most recalled in Europe?"</em>
-          </div>
+          <div class="ai-msg">Hi! I am your EU food safety assistant. Ask me anything about ingredients, additives, allergens, recalls, or food safety. Try: What is E621? or What foods are most recalled in Europe?</div>
         </div>
         <div class="ai-input-row">
-          <input type="text" id="ai-input" placeholder="Ask about food safety…" onkeydown="if(event.key==='Enter') askAI()" />
+          <input type="text" id="ai-input" placeholder="Ask about food safety..." onkeydown="if(event.key==='Enter') askAI()" />
           <button id="ai-btn" onclick="askAI()">Ask</button>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- ── RASFF Consumer Portal embed ── -->
-  <div class="section-title">
-    <span class="dot red"></span> EU Recall Notices — Consumer Portal
-  </div>
+  <div class="section-title"><span class="dot red"></span> EU Recall Notices — Consumer Portal</div>
   <div class="rasff-embed">
-    <div class="card-head" style="background:var(--gray-l); padding:12px 20px;">
-      <div style="font-size:13px; color:var(--muted);">
-        Official RASFF consumer recall notices — updated directly by the European Commission
-      </div>
-    </div>
-    <iframe
-      src="https://webgate.ec.europa.eu/rasff-window/screen/consumers"
-      height="520"
-      title="RASFF Consumer Portal"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups">
-    </iframe>
+    <div class="card-head" style="background:var(--gray-l);padding:12px 20px;"><div style="font-size:13px;color:var(--muted);">Official RASFF consumer recall notices — updated directly by the European Commission</div></div>
+    <iframe src="https://webgate.ec.europa.eu/rasff-window/screen/consumers" height="520" title="RASFF Consumer Portal" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
   </div>
-
 </main>
 
-<!-- ── Additive detail modal ── -->
 <div class="modal-backdrop" id="additive-modal" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-header">
-      <div>
-        <div class="modal-ecode" id="modal-ecode"></div>
-        <div class="modal-title" id="modal-name"></div>
-        <div class="modal-subtitle" id="modal-category"></div>
-      </div>
+      <div><div class="modal-ecode" id="modal-ecode"></div><div class="modal-title" id="modal-name"></div><div class="modal-subtitle" id="modal-category"></div></div>
       <button class="modal-close" onclick="closeModalDirect()">&#x2715;</button>
     </div>
     <div class="modal-body">
-      <div class="modal-row">
-        <div class="modal-row-label">Purpose</div>
-        <div id="modal-purpose"></div>
-      </div>
-      <div class="modal-row">
-        <div class="modal-row-label">EU status</div>
-        <div id="modal-status"></div>
-      </div>
-      <div class="modal-row">
-        <div class="modal-row-label">Why flagged</div>
-        <div id="modal-reason"></div>
-      </div>
-      <div class="modal-row">
-        <div class="modal-row-label">Found in</div>
-        <div id="modal-foundin"></div>
-      </div>
+      <div class="modal-row"><div class="modal-row-label">Purpose</div><div id="modal-purpose"></div></div>
+      <div class="modal-row"><div class="modal-row-label">EU status</div><div id="modal-status"></div></div>
+      <div class="modal-row"><div class="modal-row-label">Why flagged</div><div id="modal-reason"></div></div>
+      <div class="modal-row"><div class="modal-row-label">Found in</div><div id="modal-foundin"></div></div>
     </div>
     <div class="modal-footer">
       <button class="modal-ask-btn" id="modal-ask-btn">Ask AI to explain more</button>
@@ -609,15 +177,10 @@
   </div>
 </div>
 
-<!-- ── Score detail modal (Nutri-Score / NOVA) ── -->
 <div class="modal-backdrop" id="score-modal" onclick="closeScoreModal(event)">
   <div class="modal">
     <div class="modal-header">
-      <div>
-        <div class="modal-ecode" id="score-modal-grade"></div>
-        <div class="modal-title" id="score-modal-title"></div>
-        <div class="modal-subtitle" id="score-modal-subtitle"></div>
-      </div>
+      <div><div class="modal-ecode" id="score-modal-grade"></div><div class="modal-title" id="score-modal-title"></div><div class="modal-subtitle" id="score-modal-subtitle"></div></div>
       <button class="modal-close" onclick="closeScoreModalDirect()">&#x2715;</button>
     </div>
     <div class="modal-body" id="score-modal-body"></div>
@@ -628,19 +191,14 @@
   </div>
 </div>
 
-<footer>
-  FoodGuard — built with Open Food Facts &amp; EU RASFF data · Not a substitute for official food safety advice
-</footer>
+<footer>FoodGuard — built with Open Food Facts &amp; EU RASFF data. Not a substitute for official food safety advice.</footer>
 
 <script>
-// ── Configuration ──────────────────────────────────────────
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
 
-// Additives flagged as controversial (E-numbers)
 const RISKY_ADDITIVES = new Set([
   'en:e102','en:e104','en:e110','en:e122','en:e124','en:e129',
-  'en:e211','en:e212','en:e213',
-  'en:e320','en:e321',
+  'en:e211','en:e212','en:e213','en:e320','en:e321',
   'en:e621','en:e627','en:e631','en:e635',
   'en:e950','en:e951','en:e952','en:e954','en:e955','en:e960'
 ]);
@@ -648,406 +206,199 @@ const CAUTION_ADDITIVES = new Set([
   'en:e202','en:e407','en:e412','en:e415','en:e471','en:e476','en:e481'
 ]);
 
-// ── Additive database ─────────────────────────────────────────────────────────
 const ADDITIVE_DB = {
-  'e102': { name:'Tartrazine', category:'Colour', purpose:'Yellow colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'EU mandates a hyperactivity warning on packaging. Linked to adverse effects on activity and attention in children in some studies.', foundIn:'Soft drinks, sweets, crisps, pickles, mustard', risk:'danger' },
-  'e104': { name:'Quinoline Yellow', category:'Colour', purpose:'Greenish-yellow colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Part of the Southampton Six azo dyes. EU requires hyperactivity warning on products containing it.', foundIn:'Smoked fish, scotch eggs, some soft drinks', risk:'danger' },
-  'e110': { name:'Sunset Yellow FCF', category:'Colour', purpose:'Orange-yellow colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six dye. Associated with hyperactivity in children. Banned in Norway and Finland.', foundIn:'Orange squash, apricot jam, lemon curd, sweets', risk:'danger' },
-  'e122': { name:'Carmoisine', category:'Colour', purpose:'Red colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in several non-EU countries. Potential allergen for aspirin-sensitive individuals.', foundIn:'Jams, sweets, marzipan, glacé cherries', risk:'danger' },
-  'e124': { name:'Ponceau 4R', category:'Colour', purpose:'Red colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in USA, Norway and Finland. Linked to hyperactivity.', foundIn:'Canned strawberries, seafood dressing, tinned fruit', risk:'danger' },
-  'e129': { name:'Allura Red AC', category:'Colour', purpose:'Red-orange colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in Denmark, Belgium, France, Germany, Switzerland. Linked to hyperactivity in children.', foundIn:'Soft drinks, sweets, cereal, energy drinks', risk:'danger' },
-  'e211': { name:'Sodium Benzoate', category:'Preservative', purpose:'Prevents mould and bacteria growth', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'When combined with vitamin C (E300), can form benzene — a known carcinogen. Linked to hyperactivity in children.', foundIn:'Fizzy drinks, fruit juices, pickles, sauces', risk:'danger' },
-  'e212': { name:'Potassium Benzoate', category:'Preservative', purpose:'Prevents mould and bacteria growth', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Same concerns as E211. Can form benzene when combined with ascorbic acid.', foundIn:'Soft drinks, pickles, olives', risk:'danger' },
-  'e213': { name:'Calcium Benzoate', category:'Preservative', purpose:'Prevents mould and bacteria growth', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Benzoate family — benzene-formation concern. May trigger reactions in aspirin-sensitive individuals.', foundIn:'Margarine, soft drinks, fruit products', risk:'danger' },
-  'e320': { name:'BHA', category:'Antioxidant', purpose:'Prevents fats from going rancid', euStatusLabel:'Approved with strict limits (EU)', euStatus:'restricted', flagReason:'Classified as a possible human carcinogen (Group 2B) by IARC. Banned in Japan. California lists it as a known carcinogen.', foundIn:'Crisps, lard, butter, cereal, chewing gum, instant noodles', risk:'danger' },
-  'e321': { name:'BHT', category:'Antioxidant', purpose:'Prevents fats from going rancid', euStatusLabel:'Approved with limits (EU)', euStatus:'approved', flagReason:'Some animal studies suggest endocrine disruption. Under review by EFSA. Banned in some countries.', foundIn:'Cereals, chewing gum, stock cubes, instant mashed potato', risk:'danger' },
-  'e621': { name:'MSG (Monosodium Glutamate)', category:'Flavour enhancer', purpose:'Enhances savoury/umami taste', euStatusLabel:'Approved in EU — safe per EFSA', euStatus:'approved', flagReason:'Historically controversial. EFSA found it safe at normal doses, but high doses may cause symptoms in sensitive individuals.', foundIn:'Crisps, instant noodles, ready meals, fast food', risk:'danger' },
-  'e627': { name:'Disodium Guanylate', category:'Flavour enhancer', purpose:'Amplifies MSG effect', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Often used alongside MSG to multiply its effect. Not suitable for gout sufferers or infants.', foundIn:'Instant noodles, crisps, soups, sauces', risk:'danger' },
-  'e631': { name:'Disodium Inosinate', category:'Flavour enhancer', purpose:'Amplifies MSG effect', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Works with E627 to enhance MSG effect. Not suitable for gout sufferers. Often derived from meat or fish — not vegetarian.', foundIn:'Crisps, instant noodles, ready meals', risk:'danger' },
-  'e635': { name:'Disodium 5-Ribonucleotides', category:'Flavour enhancer', purpose:'Combined MSG amplifier', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Mixture of E627+E631. Not suitable for gout sufferers, infants, or those on low-purine diets. Not vegetarian.', foundIn:'Crisps, snacks, instant soups', risk:'danger' },
-  'e950': { name:'Acesulfame K', category:'Sweetener', purpose:'~200× sweeter than sugar', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Some animal studies raised cancer concerns, though EFSA considers it safe. Often combined with other sweeteners.', foundIn:'Diet drinks, sugar-free sweets, chewing gum, yoghurt', risk:'danger' },
-  'e951': { name:'Aspartame', category:'Sweetener', purpose:'~200× sweeter than sugar', euStatusLabel:'Approved in EU — IARC Group 2B (possibly carcinogenic, 2023)', euStatus:'restricted', flagReason:'IARC 2023: classified as possible carcinogen. Must carry phenylketonuria warning. Highly controversial — ongoing scientific debate.', foundIn:'Diet Coke, sugar-free yoghurt, chewing gum, medicines', risk:'danger' },
-  'e952': { name:'Cyclamate', category:'Sweetener', purpose:'~30-50× sweeter than sugar', euStatusLabel:'Approved in EU — BANNED in USA since 1969', euStatus:'restricted', flagReason:'Banned in the US due to bladder cancer concerns in animal studies. EU still permits it.', foundIn:'Table-top sweeteners, diet drinks, canned fruit', risk:'danger' },
-  'e954': { name:'Saccharin', category:'Sweetener', purpose:'~300× sweeter than sugar, oldest artificial sweetener', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Formerly carried cancer warning in USA (removed in 2000). Some research links it to gut microbiome disruption.', foundIn:'Table-top sweeteners, diet drinks, toothpaste', risk:'danger' },
-  'e955': { name:'Sucralose', category:'Sweetener', purpose:'~600× sweeter than sugar', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'2023 study found possible DNA-damaging compound in gut. EFSA currently reviewing.', foundIn:'Diet drinks, protein bars, sugar-free products', risk:'danger' },
-  'e960': { name:'Steviol Glycosides (Stevia)', category:'Sweetener', purpose:'Natural-origin plant sweetener', euStatusLabel:'Approved in EU since 2011', euStatus:'approved', flagReason:'Generally safe, but may interact with blood pressure/diabetes medication at high doses.', foundIn:'Diet drinks, yoghurts, health bars, table-top sweeteners', risk:'danger' },
-  'e202': { name:'Potassium Sorbate', category:'Preservative', purpose:'Prevents mould in food and drink', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Generally safe, but some individuals report skin irritation. Can inhibit beneficial gut bacteria at high doses.', foundIn:'Cheese, wine, dried fruit, yoghurt, margarine', risk:'caution' },
-  'e407': { name:'Carrageenan', category:'Thickener / Stabiliser', purpose:'Thickens and stabilises texture', euStatusLabel:'Approved in EU — banned in infant formula', euStatus:'restricted', flagReason:'Some animal studies link it to gut inflammation. EU has banned it from infant formula as a precaution.', foundIn:'Chocolate milk, cream, processed meat', risk:'caution' },
-  'e412': { name:'Guar Gum', category:'Thickener', purpose:'Thickens and binds food texture', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Generally safe, but high doses can cause bloating, gas, and diarrhoea. Rare allergic reactions reported.', foundIn:'Ice cream, sauces, gluten-free bread, soups', risk:'caution' },
-  'e415': { name:'Xanthan Gum', category:'Thickener / Stabiliser', purpose:'Thickens and prevents separation', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Safe for most people, but can cause digestive discomfort in large amounts.', foundIn:'Salad dressings, gluten-free products, sauces, ice cream', risk:'caution' },
-  'e471': { name:'Mono- and Diglycerides of Fatty Acids', category:'Emulsifier', purpose:'Keeps water and oil mixed together', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'May contain trans fats depending on production method. Can be animal-derived — not always vegetarian/vegan.', foundIn:'Bread, margarine, ice cream, peanut butter, biscuits', risk:'caution' },
-  'e476': { name:'PGPR', category:'Emulsifier', purpose:'Reduces viscosity in chocolate', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Often used to replace expensive cocoa butter. Some concern about long-term effects at high consumption.', foundIn:'Chocolate, chocolate-coated products', risk:'caution' },
-  'e481': { name:'Sodium Stearoyl Lactylate', category:'Emulsifier', purpose:'Improves texture in baked goods', euStatusLabel:'Approved in EU', euStatus:'approved', flagReason:'Safe, but may be animal-derived. Not always suitable for vegans.', foundIn:'Bread, cakes, biscuits, pastry', risk:'caution' },
+  'e102':{name:'Tartrazine',category:'Colour',purpose:'Yellow colouring agent',euStatusLabel:'Approved — warning label required in EU',euStatus:'restricted',flagReason:'EU mandates a hyperactivity warning on packaging. Linked to adverse effects on activity and attention in children.',foundIn:'Soft drinks, sweets, crisps, pickles, mustard',risk:'danger'},
+  'e104':{name:'Quinoline Yellow',category:'Colour',purpose:'Greenish-yellow colouring',euStatusLabel:'Approved — warning label required in EU',euStatus:'restricted',flagReason:'Southampton Six azo dye. EU requires hyperactivity warning on products containing it.',foundIn:'Smoked fish, scotch eggs, some soft drinks',risk:'danger'},
+  'e110':{name:'Sunset Yellow FCF',category:'Colour',purpose:'Orange-yellow colouring',euStatusLabel:'Approved — warning label required in EU',euStatus:'restricted',flagReason:'Southampton Six dye. Associated with hyperactivity in children. Banned in Norway and Finland.',foundIn:'Orange squash, apricot jam, lemon curd, sweets',risk:'danger'},
+  'e122':{name:'Carmoisine',category:'Colour',purpose:'Red colouring agent',euStatusLabel:'Approved — warning label required in EU',euStatus:'restricted',flagReason:'Southampton Six. Banned in several non-EU countries. Potential allergen for aspirin-sensitive individuals.',foundIn:'Jams, sweets, marzipan, glace cherries',risk:'danger'},
+  'e124':{name:'Ponceau 4R',category:'Colour',purpose:'Red colouring agent',euStatusLabel:'Approved — warning label required in EU',euStatus:'restricted',flagReason:'Southampton Six. Banned in USA, Norway and Finland. Linked to hyperactivity.',foundIn:'Canned strawberries, seafood dressing, tinned fruit',risk:'danger'},
+  'e129':{name:'Allura Red AC',category:'Colour',purpose:'Red-orange colouring',euStatusLabel:'Approved — warning label required in EU',euStatus:'restricted',flagReason:'Southampton Six. Banned in Denmark, Belgium, France, Germany, Switzerland.',foundIn:'Soft drinks, sweets, cereal, energy drinks',risk:'danger'},
+  'e211':{name:'Sodium Benzoate',category:'Preservative',purpose:'Prevents mould and bacteria growth',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'When combined with vitamin C, can form benzene — a known carcinogen. Linked to hyperactivity in children.',foundIn:'Fizzy drinks, fruit juices, pickles, sauces',risk:'danger'},
+  'e212':{name:'Potassium Benzoate',category:'Preservative',purpose:'Prevents mould and bacteria growth',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Same concerns as E211. Can form benzene when combined with ascorbic acid.',foundIn:'Soft drinks, pickles, olives',risk:'danger'},
+  'e213':{name:'Calcium Benzoate',category:'Preservative',purpose:'Prevents mould and bacteria growth',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Benzoate family — benzene-formation concern. May trigger reactions in aspirin-sensitive individuals.',foundIn:'Margarine, soft drinks, fruit products',risk:'danger'},
+  'e320':{name:'BHA',category:'Antioxidant',purpose:'Prevents fats from going rancid',euStatusLabel:'Approved with strict limits in EU',euStatus:'restricted',flagReason:'Possible human carcinogen (IARC Group 2B). Banned in Japan. California lists it as a known carcinogen.',foundIn:'Crisps, lard, butter, cereal, chewing gum, instant noodles',risk:'danger'},
+  'e321':{name:'BHT',category:'Antioxidant',purpose:'Prevents fats from going rancid',euStatusLabel:'Approved with limits in EU',euStatus:'approved',flagReason:'Some animal studies suggest endocrine disruption. Under review by EFSA.',foundIn:'Cereals, chewing gum, stock cubes, instant mashed potato',risk:'danger'},
+  'e621':{name:'MSG',category:'Flavour enhancer',purpose:'Enhances savoury/umami taste',euStatusLabel:'Approved in EU — safe per EFSA',euStatus:'approved',flagReason:'Historically controversial. EFSA found it safe at normal doses, but high doses may cause symptoms in sensitive individuals.',foundIn:'Crisps, instant noodles, ready meals, fast food',risk:'danger'},
+  'e627':{name:'Disodium Guanylate',category:'Flavour enhancer',purpose:'Amplifies MSG effect',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Often used alongside MSG to multiply its effect. Not suitable for gout sufferers or infants.',foundIn:'Instant noodles, crisps, soups, sauces',risk:'danger'},
+  'e631':{name:'Disodium Inosinate',category:'Flavour enhancer',purpose:'Amplifies MSG effect',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Works with E627 to enhance MSG effect. Not suitable for gout sufferers. Often derived from meat — not vegetarian.',foundIn:'Crisps, instant noodles, ready meals',risk:'danger'},
+  'e635':{name:'Disodium 5-Ribonucleotides',category:'Flavour enhancer',purpose:'Combined MSG amplifier',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Mixture of E627 and E631. Not suitable for gout sufferers, infants, or those on low-purine diets.',foundIn:'Crisps, snacks, instant soups',risk:'danger'},
+  'e950':{name:'Acesulfame K',category:'Sweetener',purpose:'About 200x sweeter than sugar',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Some animal studies raised cancer concerns, though EFSA considers it safe.',foundIn:'Diet drinks, sugar-free sweets, chewing gum, yoghurt',risk:'danger'},
+  'e951':{name:'Aspartame',category:'Sweetener',purpose:'About 200x sweeter than sugar',euStatusLabel:'Approved in EU — IARC Group 2B possibly carcinogenic 2023',euStatus:'restricted',flagReason:'IARC 2023: classified as possible carcinogen. Must carry phenylketonuria warning.',foundIn:'Diet Coke, sugar-free yoghurt, chewing gum, medicines',risk:'danger'},
+  'e952':{name:'Cyclamate',category:'Sweetener',purpose:'About 30-50x sweeter than sugar',euStatusLabel:'Approved in EU — banned in USA since 1969',euStatus:'restricted',flagReason:'Banned in the US due to bladder cancer concerns in animal studies. EU still permits it.',foundIn:'Table-top sweeteners, diet drinks, canned fruit',risk:'danger'},
+  'e954':{name:'Saccharin',category:'Sweetener',purpose:'About 300x sweeter than sugar',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Formerly carried cancer warning in USA. Some research links it to gut microbiome disruption.',foundIn:'Table-top sweeteners, diet drinks, toothpaste',risk:'danger'},
+  'e955':{name:'Sucralose',category:'Sweetener',purpose:'About 600x sweeter than sugar',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'2023 study found possible DNA-damaging compound in gut. EFSA currently reviewing.',foundIn:'Diet drinks, protein bars, sugar-free products',risk:'danger'},
+  'e960':{name:'Steviol Glycosides',category:'Sweetener',purpose:'Natural-origin plant sweetener',euStatusLabel:'Approved in EU since 2011',euStatus:'approved',flagReason:'Generally safe, but may interact with blood pressure or diabetes medication at high doses.',foundIn:'Diet drinks, yoghurts, health bars, table-top sweeteners',risk:'danger'},
+  'e202':{name:'Potassium Sorbate',category:'Preservative',purpose:'Prevents mould in food and drink',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Generally safe, but some individuals report skin irritation. Can inhibit beneficial gut bacteria at high doses.',foundIn:'Cheese, wine, dried fruit, yoghurt, margarine',risk:'caution'},
+  'e407':{name:'Carrageenan',category:'Thickener',purpose:'Thickens and stabilises texture',euStatusLabel:'Approved in EU — banned in infant formula',euStatus:'restricted',flagReason:'Some animal studies link it to gut inflammation. EU has banned it from infant formula as a precaution.',foundIn:'Chocolate milk, cream, processed meat',risk:'caution'},
+  'e412':{name:'Guar Gum',category:'Thickener',purpose:'Thickens and binds food texture',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Generally safe, but high doses can cause bloating, gas, and diarrhoea.',foundIn:'Ice cream, sauces, gluten-free bread, soups',risk:'caution'},
+  'e415':{name:'Xanthan Gum',category:'Thickener',purpose:'Thickens and prevents separation',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Safe for most people, but can cause digestive discomfort in large amounts.',foundIn:'Salad dressings, gluten-free products, sauces, ice cream',risk:'caution'},
+  'e471':{name:'Mono and Diglycerides',category:'Emulsifier',purpose:'Keeps water and oil mixed together',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'May contain trans fats depending on production. Can be animal-derived — not always vegetarian.',foundIn:'Bread, margarine, ice cream, peanut butter, biscuits',risk:'caution'},
+  'e476':{name:'PGPR',category:'Emulsifier',purpose:'Reduces viscosity in chocolate',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Often used to replace expensive cocoa butter. Some concern about long-term effects at high consumption.',foundIn:'Chocolate, chocolate-coated products',risk:'caution'},
+  'e481':{name:'Sodium Stearoyl Lactylate',category:'Emulsifier',purpose:'Improves texture in baked goods',euStatusLabel:'Approved in EU',euStatus:'approved',flagReason:'Safe, but may be animal-derived. Not always suitable for vegans.',foundIn:'Bread, cakes, biscuits, pastry',risk:'caution'},
 };
 
-function getAdditiveInfo(eCode) {
-  const key = eCode.replace('en:','').toLowerCase();
-  return ADDITIVE_DB[key] || null;
-}
+function getAdditiveInfo(c){return ADDITIVE_DB[c.replace('en:','').toLowerCase()]||null;}
 
-// ── Modal open/close ──────────────────────────────────────────────────────────
-function openAdditiveModal(eCode) {
-  const info = getAdditiveInfo(eCode);
-  const displayCode = eCode.replace('en:','').toUpperCase();
-
-  const ecodeEl   = document.getElementById('modal-ecode');
-  const nameEl    = document.getElementById('modal-name');
-  const catEl     = document.getElementById('modal-category');
-  const purposeEl = document.getElementById('modal-purpose');
-  const statusEl  = document.getElementById('modal-status');
-  const reasonEl  = document.getElementById('modal-reason');
-  const foundInEl = document.getElementById('modal-foundin');
-  const askBtn    = document.getElementById('modal-ask-btn');
-
-  if (info) {
-    ecodeEl.textContent    = displayCode;
-    ecodeEl.className      = `modal-ecode ${info.risk}`;
-    nameEl.textContent     = info.name;
-    catEl.textContent      = info.category;
-    purposeEl.textContent  = info.purpose;
-    statusEl.innerHTML     = `<span class="modal-status-pill ${info.euStatus === 'approved' ? 'approved' : 'restricted'}">${info.euStatusLabel}</span>`;
-    reasonEl.textContent   = info.flagReason;
-    foundInEl.textContent  = info.foundIn;
-    askBtn.onclick = () => {
-      closeModalDirect();
-      const aiInput = document.getElementById('ai-input');
-      aiInput.value = `Tell me more about ${info.name} (${displayCode}) — is it safe for everyday consumption?`;
-      aiInput.focus();
-      document.querySelector('.two-col').scrollIntoView({ behavior:'smooth', block:'center' });
-    };
-  } else {
-    ecodeEl.textContent   = displayCode;
-    ecodeEl.className     = 'modal-ecode safe';
-    nameEl.textContent    = 'Food additive';
-    catEl.textContent     = 'Not in local database — tap Ask AI for details';
-    purposeEl.textContent = 'This additive is approved for use in the EU.';
-    statusEl.innerHTML    = `<span class="modal-status-pill approved">Approved in EU</span>`;
-    reasonEl.textContent  = 'Not specifically flagged — considered low concern.';
-    foundInEl.textContent = 'Varies by product.';
-    askBtn.onclick = () => {
-      closeModalDirect();
-      const aiInput = document.getElementById('ai-input');
-      aiInput.value = `What is ${displayCode}? Is it safe? What foods is it commonly found in?`;
-      aiInput.focus();
-      document.querySelector('.two-col').scrollIntoView({ behavior:'smooth', block:'center' });
-    };
-  }
-
+function openAdditiveModal(eCode){
+  const info=getAdditiveInfo(eCode);
+  const code=eCode.replace('en:','').toUpperCase();
+  document.getElementById('modal-ecode').textContent=code;
+  document.getElementById('modal-ecode').className='modal-ecode '+(info?info.risk:'safe');
+  document.getElementById('modal-name').textContent=info?info.name:'Food additive';
+  document.getElementById('modal-category').textContent=info?info.category:'Not in local database';
+  document.getElementById('modal-purpose').textContent=info?info.purpose:'Approved for use in the EU.';
+  document.getElementById('modal-status').innerHTML='<span class="modal-status-pill '+(info?(info.euStatus==='approved'?'approved':'restricted'):'approved')+'">'+(info?info.euStatusLabel:'Approved in EU')+'</span>';
+  document.getElementById('modal-reason').textContent=info?info.flagReason:'Not specifically flagged.';
+  document.getElementById('modal-foundin').textContent=info?info.foundIn:'Varies by product.';
+  const q=info?('Tell me more about '+info.name+' ('+code+') — is it safe for everyday consumption?'):('What is '+code+'? Is it safe?');
+  document.getElementById('modal-ask-btn').onclick=()=>{closeModalDirect();prefillAI(q);};
   document.getElementById('additive-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow='hidden';
 }
+function closeModal(e){if(e.target===document.getElementById('additive-modal'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('additive-modal').classList.remove('open');document.body.style.overflow='';}
 
-function closeModal(e) {
-  if (e.target === document.getElementById('additive-modal')) closeModalDirect();
+const NUTRI_DATA={
+  A:{colorClass:'safe',label:'Excellent nutritional quality',summary:'Very good nutritional balance — high in protein, fibre, or fruit content, and low in sugar, salt, and saturated fat.',scale:[{g:'A',active:true},{g:'B'},{g:'C'},{g:'D'},{g:'E'}],aiQ:'What makes a food earn a Nutri-Score A rating?'},
+  B:{colorClass:'safe',label:'Good nutritional quality',summary:'A reasonably healthy choice. Scores well overall but may have slightly elevated sugar, salt, or saturated fat.',scale:[{g:'A'},{g:'B',active:true},{g:'C'},{g:'D'},{g:'E'}],aiQ:'What does Nutri-Score B mean and how is it calculated?'},
+  C:{colorClass:'caution',label:'Average nutritional quality',summary:'A middle-ground product. Some positive nutritional aspects, but also notable levels of sugar, salt, or fat.',scale:[{g:'A'},{g:'B'},{g:'C',active:true},{g:'D'},{g:'E'}],aiQ:'What does Nutri-Score C mean for my diet?'},
+  D:{colorClass:'danger',label:'Poor nutritional quality',summary:'High in sugar, salt, saturated fat, or calories relative to nutritional benefits. Best consumed occasionally.',scale:[{g:'A'},{g:'B'},{g:'C'},{g:'D',active:true},{g:'E'}],aiQ:'What does Nutri-Score D mean and should I avoid these foods?'},
+  E:{colorClass:'danger',label:'Bad nutritional quality',summary:'Very poor nutritional profile — high in unhealthy components with few redeeming nutrients. Limit consumption.',scale:[{g:'A'},{g:'B'},{g:'C'},{g:'D'},{g:'E',active:true}],aiQ:'What does Nutri-Score E mean and what foods get this rating?'},
+};
+const NOVA_DATA={
+  1:{colorClass:'safe',label:'Unprocessed or minimally processed',summary:'Foods in their natural state — drying, freezing, pasteurising only. Nothing artificial added. Examples: fresh fruit, eggs, plain meat, milk, plain nuts.',detail:'The gold standard. These foods are as close to nature as possible.',aiQ:'What are good examples of NOVA 1 foods and why are they the healthiest?'},
+  2:{colorClass:'safe',label:'Processed culinary ingredients',summary:'Substances extracted from nature and used in cooking. Examples: olive oil, butter, flour, sugar, salt, honey, vinegar.',detail:'Building blocks of cooking. Not harmful in themselves — used to prepare NOVA 1 foods.',aiQ:'What is the difference between NOVA 1 and NOVA 2 foods?'},
+  3:{colorClass:'caution',label:'Processed foods',summary:'Foods made by adding salt, sugar, or oil to NOVA 1 foods. Examples: canned fish, cheese, cured ham, smoked meat, tinned vegetables.',detail:'Processing serves a clear purpose — preservation, taste, or safety. Fine as part of a balanced diet.',aiQ:'What makes a food NOVA 3 and how is it different from ultra-processed?'},
+  4:{colorClass:'danger',label:'Ultra-processed foods',summary:'Industrial formulations made mostly from cheap ingredients and additives — colours, flavours, emulsifiers, preservatives, sweeteners. Ingredients you would never find in a home kitchen.',detail:'Designed to be hyper-palatable. Research links high NOVA 4 consumption to obesity, type 2 diabetes, and heart disease.',aiQ:'Why are ultra-processed NOVA 4 foods considered harmful?'},
+};
+
+function openScoreModal(type,value){
+  const modal=document.getElementById('score-modal');
+  const gradeEl=document.getElementById('score-modal-grade');
+  const titleEl=document.getElementById('score-modal-title');
+  const subEl=document.getElementById('score-modal-subtitle');
+  const bodyEl=document.getElementById('score-modal-body');
+  const askBtn=document.getElementById('score-modal-ask-btn');
+  const scaleColorsN={A:'#038141',B:'#85bb2f',C:'#fecb02',D:'#ee8100',E:'#e63e11'};
+  const scaleColorsV={1:'#038141',2:'#85bb2f',3:'#fecb02',4:'#e63e11'};
+  if(type==='nutri'){
+    const d=NUTRI_DATA[value]; if(!d)return;
+    const sc=d.scale.map(s=>'<span style="display:inline-flex;align-items:center;justify-content:center;width:'+(s.active?'36px':'28px')+';height:'+(s.active?'36px':'28px')+';border-radius:50%;background:'+scaleColorsN[s.g]+';color:'+(s.g==='C'?'#333':'white')+';font-weight:800;font-size:'+(s.active?'16px':'13px')+';opacity:'+(s.active?'1':'0.35')+'">'+s.g+'</span>').join('');
+    gradeEl.textContent='Nutri-Score '+value; gradeEl.className='modal-ecode '+d.colorClass;
+    titleEl.textContent=d.label; subEl.textContent='EU nutritional quality rating';
+    bodyEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;">'+sc+'</div><div class="modal-row"><div class="modal-row-label">What it means</div><div>'+d.summary+'</div></div><div class="modal-row"><div class="modal-row-label">How it works</div><div>Calculated from nutrients per 100g — balancing negatives (energy, sugars, saturated fat, sodium) against positives (fibre, protein, fruit and vegetables). Developed in France, now recommended across the EU.</div></div><div class="modal-row"><div class="modal-row-label">Mandatory?</div><div>No — optional in the EU. Brands choose to display it.</div></div>';
+    askBtn.onclick=()=>{closeScoreModalDirect();prefillAI(d.aiQ);};
+  } else {
+    const d=NOVA_DATA[value]; if(!d)return;
+    const sc=[1,2,3,4].map(n=>'<span style="display:inline-flex;align-items:center;justify-content:center;width:'+(n==value?'36px':'28px')+';height:'+(n==value?'36px':'28px')+';border-radius:50%;background:'+scaleColorsV[n]+';color:'+(n===3?'#333':'white')+';font-weight:800;font-size:'+(n==value?'16px':'13px')+';opacity:'+(n==value?'1':'0.35')+'">'+n+'</span>').join('');
+    gradeEl.textContent='NOVA '+value; gradeEl.className='modal-ecode '+d.colorClass;
+    titleEl.textContent=d.label; subEl.textContent='EU food processing classification';
+    bodyEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;">'+sc+'</div><div class="modal-row"><div class="modal-row-label">What it means</div><div>'+d.summary+'</div></div><div class="modal-row"><div class="modal-row-label">Context</div><div>'+d.detail+'</div></div><div class="modal-row"><div class="modal-row-label">How it works</div><div>Developed by Brazilian researchers. Classifies foods by extent of processing — not by nutrients. Widely used by EFSA and WHO.</div></div>';
+    askBtn.onclick=()=>{closeScoreModalDirect();prefillAI(d.aiQ);};
+  }
+  modal.classList.add('open'); document.body.style.overflow='hidden';
 }
-function closeModalDirect() {
-  document.getElementById('additive-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+function prefillAI(q){const i=document.getElementById('ai-input');i.value=q;i.focus();document.querySelector('.two-col').scrollIntoView({behavior:'smooth',block:'center'});}
+function closeScoreModal(e){if(e.target===document.getElementById('score-modal'))closeScoreModalDirect();}
+function closeScoreModalDirect(){document.getElementById('score-modal').classList.remove('open');document.body.style.overflow='';}
 
-let searchedCount = 0;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModalDirect();closeScoreModalDirect();}});
 
-// ── Stat: set immediately — RASFF 2024 annual report figure ─────────────────
-function loadStats() {
-  document.getElementById('stat-alerts').textContent = '5,250+';
-}
+let searchedCount=0;
 
-// ── Load EU alerts — render curated RASFF data immediately, no network needed ─
-function loadAlerts() {
-  const list = document.getElementById('alerts-list');
+function loadStats(){document.getElementById('stat-alerts').textContent='5,250+';}
 
-  const rasffAlerts = [
-    { type:'alert',   title:'Salmonella in sesame seeds',                    meta:'RASFF · Turkey → EU · Jan 2025' },
-    { type:'alert',   title:'Aflatoxins in pistachios',                      meta:'RASFF · USA → EU · Dec 2024' },
-    { type:'warning', title:'Undeclared allergen (gluten) in rice crackers', meta:'RASFF · Netherlands · Nov 2024' },
-    { type:'warning', title:'Excessive pesticide residues in fresh herbs',   meta:'RASFF · Egypt → EU · Nov 2024' },
-    { type:'alert',   title:'Listeria in smoked salmon',                     meta:'RASFF · Poland → EU · Oct 2024' },
-    { type:'info',    title:'Unauthorised GMO in maize flour',               meta:'RASFF · Ukraine → EU · Oct 2024' },
-    { type:'warning', title:'Cadmium excess in cocoa powder',                meta:'RASFF · Multiple origins → EU · Sep 2024' },
-    { type:'alert',   title:'E. coli in raw milk cheese',                    meta:'RASFF · France · Aug 2024' },
+function loadAlerts(){
+  const list=document.getElementById('alerts-list');
+  const items=[
+    {type:'alert',title:'Salmonella in sesame seeds',meta:'RASFF · Turkey to EU · Jan 2025'},
+    {type:'alert',title:'Aflatoxins in pistachios',meta:'RASFF · USA to EU · Dec 2024'},
+    {type:'warning',title:'Undeclared allergen (gluten) in rice crackers',meta:'RASFF · Netherlands · Nov 2024'},
+    {type:'warning',title:'Excessive pesticide residues in fresh herbs',meta:'RASFF · Egypt to EU · Nov 2024'},
+    {type:'alert',title:'Listeria in smoked salmon',meta:'RASFF · Poland to EU · Oct 2024'},
+    {type:'info',title:'Unauthorised GMO in maize flour',meta:'RASFF · Ukraine to EU · Oct 2024'},
+    {type:'warning',title:'Cadmium excess in cocoa powder',meta:'RASFF · Multiple origins · Sep 2024'},
+    {type:'alert',title:'E. coli in raw milk cheese',meta:'RASFF · France · Aug 2024'},
   ];
-
-  list.innerHTML = rasffAlerts.map(item => `
-    <div class="alert-item">
-      <span class="badge ${item.type}">${item.type === 'alert' ? 'Alert' : item.type === 'warning' ? 'Warning' : 'Notice'}</span>
-      <div>
-        <div class="alert-title">${item.title}</div>
-        <div class="alert-meta">${item.meta}</div>
-      </div>
-    </div>
-  `).join('');
+  list.innerHTML=items.map(i=>'<div class="alert-item"><span class="badge '+i.type+'">'+(i.type==='alert'?'Alert':i.type==='warning'?'Warning':'Notice')+'</span><div><div class="alert-title">'+i.title+'</div><div class="alert-meta">'+i.meta+'</div></div></div>').join('');
 }
 
-// ── Product search ────────────────────────────────────────────────────────────
-async function searchProduct() {
-  const q = document.getElementById('search-input').value.trim();
-  if (!q) return;
-
-  const result = document.getElementById('product-result');
-  result.style.display = 'block';
-  result.innerHTML = `<div class="product-card"><div class="loading-row"><span class="spinner"></span> Searching for "${q}"…</div></div>`;
-
-  try {
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'FoodGuard/1.0 (educational project)' } });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const data = await res.json();
-
-    // Pick first product that has a name
-    const product = (data.products || []).find(p => p.product_name?.trim());
-
-    if (!product) {
-      result.innerHTML = `<div class="product-card"><div class="empty-state">No product found for "<strong>${q}</strong>". Try a different name or brand (e.g. "Nutella", "Pringles original").</div></div>`;
-      return;
-    }
-
+async function searchProduct(){
+  const q=document.getElementById('search-input').value.trim();
+  if(!q)return;
+  const result=document.getElementById('product-result');
+  result.style.display='block';
+  result.innerHTML='<div class="product-card"><div class="loading-row"><span class="spinner"></span> Searching...</div></div>';
+  try{
+    const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=5&fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text';
+    const res=await fetch(url,{headers:{'User-Agent':'FoodGuard/1.0'}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const product=(data.products||[]).find(p=>p.product_name&&p.product_name.trim());
+    if(!product){result.innerHTML='<div class="product-card"><div class="empty-state">No product found for <strong>'+q+'</strong>. Try a different name.</div></div>';return;}
     searchedCount++;
-    document.getElementById('stat-searched').textContent = searchedCount;
-    renderProduct(product, result);
-
-  } catch(err) {
-    result.innerHTML = `<div class="product-card"><div class="empty-state">Search failed — <strong>${err.message}</strong>. Please check your connection and try again.</div></div>`;
+    document.getElementById('stat-searched').textContent=searchedCount;
+    renderProduct(product,result);
+  }catch(err){
+    result.innerHTML='<div class="product-card"><div class="empty-state">Search failed: '+err.message+'</div></div>';
   }
 }
 
-function renderProduct(p, container) {
-  const nutri = p.nutriscore_grade?.toUpperCase();
-  const nova  = p.nova_group;
-  const img   = p.image_front_url || '';
-  const name  = p.product_name || 'Unknown product';
-  const brand = p.brands || '';
-
-  // Classify additives
-  const additives = p.additives_tags || [];
-  const riskyOnes   = additives.filter(a => RISKY_ADDITIVES.has(a));
-  const cautionOnes = additives.filter(a => CAUTION_ADDITIVES.has(a));
-  const safeOnes    = additives.filter(a => !RISKY_ADDITIVES.has(a) && !CAUTION_ADDITIVES.has(a));
-
-  // Allergens
-  const allergens = (p.allergens_tags || [])
-    .map(a => a.replace('en:','').replace(/-/g,' '))
-    .filter(Boolean);
-
-  // Ingredients
-  const ingredients = p.ingredients_text?.slice(0, 300) || 'Not available';
-
-  const nutriHTML = nutri
-    ? `<span class="nutri nutri-${nutri.toLowerCase()} clickable" onclick="openScoreModal('nutri','${nutri}')" title="Tap to learn what Nutri-Score means">Nutri-Score ${nutri}</span>`
-    : '';
-  const novaHTML = nova
-    ? `<span class="nova nova-${nova} clickable" onclick="openScoreModal('nova','${nova}')" title="Tap to learn what NOVA means">NOVA ${nova}</span>`
-    : '';
-
-  const novaLabels = {
-    1: 'Unprocessed / minimally processed',
-    2: 'Processed culinary ingredients',
-    3: 'Processed foods',
-    4: 'Ultra-processed foods'
-  };
-
-  container.innerHTML = `
-    <div class="product-card">
-      <div class="section-title" style="margin-bottom:16px;">
-        <span class="dot"></span> Product analysis
-      </div>
-      <div class="product-header">
-        ${img ? `<img class="product-img" src="${img}" alt="${name}" onerror="this.style.display='none'" />` : ''}
-        <div>
-          <div class="product-name">${name}</div>
-          ${brand ? `<div class="product-brand">${brand}</div>` : ''}
-          <div style="margin-top:8px;">
-            ${nutriHTML}
-            ${novaHTML}
-          </div>
-          ${nova ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;">NOVA ${nova}: ${novaLabels[nova] || ''}</div>` : ''}
-        </div>
-      </div>
-
-      ${allergens.length ? `
-        <div class="sub-label">⚠️ Allergens declared</div>
-        <div class="chip-list">
-          ${allergens.map(a => `<span class="chip danger">${a}</span>`).join('')}
-        </div>
-      ` : '<div style="font-size:13px;color:var(--muted);margin-top:4px;">No allergens declared</div>'}
-
-      ${additives.length ? `
-        <div class="sub-label">Additives (E-numbers)</div>
-        <div class="chip-list">
-          ${riskyOnes.map(a => { const info = getAdditiveInfo(a); const code = a.replace('en:','').toUpperCase(); const label = info ? `${code} · ${info.name}` : `${code} ⚠`; return `<span class="chip danger clickable" onclick="openAdditiveModal('${a}')" title="Tap for details">${label} ⚠</span>`; }).join('')}
-          ${cautionOnes.map(a => { const info = getAdditiveInfo(a); const code = a.replace('en:','').toUpperCase(); const label = info ? `${code} · ${info.name}` : code; return `<span class="chip caution clickable" onclick="openAdditiveModal('${a}')" title="Tap for details">${label}</span>`; }).join('')}
-          ${safeOnes.map(a => { const info = getAdditiveInfo(a); const code = a.replace('en:','').toUpperCase(); const label = info ? `${code} · ${info.name}` : code; return `<span class="chip clickable" onclick="openAdditiveModal('${a}')" title="Tap for details">${label}</span>`; }).join('')}
-        </div>
-        ${riskyOnes.length ? `<div style="font-size:12px;color:var(--red);margin-top:6px;">⚠ ${riskyOnes.length} additive(s) flagged as controversial in EU consumer groups</div>` : ''}
-      ` : ''}
-
-      <div class="sub-label">Ingredients</div>
-      <div style="font-size:13px;color:var(--gray);line-height:1.7;">${ingredients}</div>
-
-      <div style="margin-top:16px; font-size:12px; color:var(--muted);">
-        Data from Open Food Facts · <a href="https://world.openfoodfacts.org/product/${encodeURIComponent(name)}" target="_blank" rel="noopener" style="color:var(--green);">View full product page</a>
-      </div>
-    </div>
-  `;
+function renderProduct(p,container){
+  const nutri=(p.nutriscore_grade||'').toUpperCase();
+  const nova=p.nova_group;
+  const img=p.image_front_url||'';
+  const name=p.product_name||'Unknown product';
+  const brand=p.brands||'';
+  const additives=p.additives_tags||[];
+  const risky=additives.filter(a=>RISKY_ADDITIVES.has(a));
+  const caution=additives.filter(a=>CAUTION_ADDITIVES.has(a));
+  const safe=additives.filter(a=>!RISKY_ADDITIVES.has(a)&&!CAUTION_ADDITIVES.has(a));
+  const allergens=(p.allergens_tags||[]).map(a=>a.replace('en:','').replace(/-/g,' ')).filter(Boolean);
+  const ingredients=(p.ingredients_text||'').slice(0,300)||'Not available';
+  const novaLabels={1:'Unprocessed',2:'Processed culinary ingredients',3:'Processed foods',4:'Ultra-processed foods'};
+  const nutriHTML=nutri?'<span class="nutri nutri-'+nutri.toLowerCase()+' clickable" onclick="openScoreModal(\'nutri\',\''+nutri+'\')" title="Tap to learn more">Nutri-Score '+nutri+'</span>':'';
+  const novaHTML=nova?'<span class="nova nova-'+nova+' clickable" onclick="openScoreModal(\'nova\','+nova+')" title="Tap to learn more">NOVA '+nova+'</span>':'';
+  const chipFn=(a,cls)=>{const info=getAdditiveInfo(a);const code=a.replace('en:','').toUpperCase();const lbl=info?code+' - '+info.name:code;return '<span class="chip '+cls+' clickable" onclick="openAdditiveModal(\''+a+'\')" title="Tap for details">'+lbl+(cls==='danger'?' !':'')+'</span>';};
+  container.innerHTML='<div class="product-card">'
+    +'<div class="section-title" style="margin-bottom:16px;"><span class="dot"></span> Product analysis</div>'
+    +'<div class="product-header">'+(img?'<img class="product-img" src="'+img+'" alt="'+name+'" onerror="this.style.display=\'none\'" />':'')
+    +'<div><div class="product-name">'+name+'</div>'+(brand?'<div class="product-brand">'+brand+'</div>':'')
+    +'<div style="margin-top:8px;">'+nutriHTML+novaHTML+'</div>'+(nova?'<div style="font-size:12px;color:var(--muted);margin-top:6px;">NOVA '+nova+': '+(novaLabels[nova]||'')+'</div>':'')+'</div></div>'
+    +(allergens.length?'<div class="sub-label">Allergens declared</div><div class="chip-list">'+allergens.map(a=>'<span class="chip danger">'+a+'</span>').join('')+'</div>':'<div style="font-size:13px;color:var(--muted);margin-top:8px;">No allergens declared</div>')
+    +(additives.length?'<div class="sub-label">Additives (E-numbers)</div><div class="chip-list">'+risky.map(a=>chipFn(a,'danger')).join('')+caution.map(a=>chipFn(a,'caution')).join('')+safe.map(a=>chipFn(a,'')).join('')+'</div>'+(risky.length?'<div style="font-size:12px;color:var(--red);margin-top:6px;">'+risky.length+' additive(s) flagged as controversial</div>':''):'')
+    +'<div class="sub-label">Ingredients</div><div style="font-size:13px;color:var(--gray);line-height:1.7;">'+ingredients+'</div>'
+    +'<div style="margin-top:16px;font-size:12px;color:var(--muted);">Data from Open Food Facts</div>'
+    +'</div>';
 }
 
-// ── Score modal (Nutri-Score / NOVA) ─────────────────────────────────────────
-const NUTRI_DATA = {
-  A: { colorClass:'safe',   label:'Excellent nutritional quality', summary:'This product has a very good nutritional balance — high in beneficial nutrients like protein, fibre, or fruit content, and low in sugar, salt, and saturated fat.', scale: [ {g:'A',active:true}, {g:'B'}, {g:'C'}, {g:'D'}, {g:'E'} ], aiQ:'What makes a food earn a Nutri-Score A rating?' },
-  B: { colorClass:'safe',   label:'Good nutritional quality',      summary:'A reasonably healthy choice. It scores well overall but may have a slightly elevated level of sugar, salt, or saturated fat compared to an A-rated product.', scale: [ {g:'A'}, {g:'B',active:true}, {g:'C'}, {g:'D'}, {g:'E'} ], aiQ:'What does Nutri-Score B mean and how is it calculated?' },
-  C: { colorClass:'caution',label:'Average nutritional quality',   summary:'A middle-ground product. Some positive nutritional aspects, but also notable levels of sugar, salt, or fat. Fine occasionally, but not ideal as a daily staple.', scale: [ {g:'A'}, {g:'B'}, {g:'C',active:true}, {g:'D'}, {g:'E'} ], aiQ:'What does Nutri-Score C mean for my diet?' },
-  D: { colorClass:'danger', label:'Poor nutritional quality',      summary:'This product is high in sugar, salt, saturated fat, or calories relative to its nutritional benefits. Best consumed occasionally and in small portions.', scale: [ {g:'A'}, {g:'B'}, {g:'C'}, {g:'D',active:true}, {g:'E'} ], aiQ:'What does Nutri-Score D mean and should I avoid these foods?' },
-  E: { colorClass:'danger', label:'Bad nutritional quality',       summary:'Very poor nutritional profile — high in unhealthy components with few redeeming nutrients. This is the lowest Nutri-Score rating. Limit consumption.', scale: [ {g:'A'}, {g:'B'}, {g:'C'}, {g:'D'}, {g:'E',active:true} ], aiQ:'What does Nutri-Score E mean and what foods typically get this rating?' },
-};
-
-const NOVA_DATA = {
-  1: { colorClass:'safe',   label:'Unprocessed or minimally processed', summary:'Foods in their natural state or with minimal alteration — drying, freezing, pasteurising. Nothing artificial added. Examples: fresh fruit, eggs, plain meat, milk, plain nuts.', detail:'This is the gold standard. These foods are as close to nature as possible. Eat as much of these as you like.', aiQ:'What are good examples of NOVA 1 foods and why are they the healthiest?' },
-  2: { colorClass:'safe',   label:'Processed culinary ingredients',     summary:'Substances extracted from nature and used in cooking — not eaten alone. Examples: olive oil, butter, flour, sugar, salt, honey, vinegar.', detail:'These are the building blocks of cooking. Not harmful in themselves, but are used to prepare NOVA 1 foods. The processing is simple and functional.', aiQ:'What is the difference between NOVA 1 and NOVA 2 foods?' },
-  3: { colorClass:'caution',label:'Processed foods',                    summary:'Foods made by adding salt, sugar, oil, or other NOVA 2 ingredients to NOVA 1 foods. Examples: canned fish, cheese, cured ham, smoked meat, tinned vegetables, freshly baked bread.', detail:'Processing here serves a clear purpose — preservation, taste, or safety. These foods are fine as part of a balanced diet, but check the label for salt and sugar content.', aiQ:'What makes a food NOVA 3 and how is it different from ultra-processed?' },
-  4: { colorClass:'danger', label:'Ultra-processed foods',              summary:'Industrial formulations made mostly from cheap ingredients and additives — colours, flavours, emulsifiers, preservatives, sweeteners. They typically contain ingredients you would never find in a home kitchen.', detail:'NOVA 4 foods are designed to be hyper-palatable and long-lasting. Research links high NOVA 4 consumption to obesity, type 2 diabetes, heart disease, and some cancers. The EU public health guidance recommends minimising these.', aiQ:'Why are ultra-processed NOVA 4 foods considered harmful and what should I eat instead?' },
-};
-
-function openScoreModal(type, value) {
-  const modal    = document.getElementById('score-modal');
-  const gradeEl  = document.getElementById('score-modal-grade');
-  const titleEl  = document.getElementById('score-modal-title');
-  const subEl    = document.getElementById('score-modal-subtitle');
-  const bodyEl   = document.getElementById('score-modal-body');
-  const askBtn   = document.getElementById('score-modal-ask-btn');
-
-  if (type === 'nutri') {
-    const d = NUTRI_DATA[value];
-    if (!d) return;
-
-    // Build the A-B-C-D-E visual scale
-    const scaleColors = { A:'#038141', B:'#85bb2f', C:'#fecb02', D:'#ee8100', E:'#e63e11' };
-    const scaleHTML = d.scale.map(s => `
-      <span style="
-        display:inline-flex; align-items:center; justify-content:center;
-        width:${s.active ? '36px' : '28px'}; height:${s.active ? '36px' : '28px'};
-        border-radius:50%; background:${scaleColors[s.g]};
-        color:${s.g === 'C' ? '#333' : 'white'};
-        font-weight:800; font-size:${s.active ? '16px' : '13px'};
-        opacity:${s.active ? '1' : '0.35'};
-        transition: all .2s;
-      ">${s.g}</span>
-    `).join('');
-
-    gradeEl.textContent   = `Nutri-Score ${value}`;
-    gradeEl.className     = `modal-ecode ${d.colorClass}`;
-    titleEl.textContent   = d.label;
-    subEl.textContent     = 'EU nutritional quality rating';
-    bodyEl.innerHTML = `
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">${scaleHTML}</div>
-      <div class="modal-row"><div class="modal-row-label">What it means</div><div>${d.summary}</div></div>
-      <div class="modal-row"><div class="modal-row-label">How it works</div><div>Nutri-Score is calculated from a product's nutrients per 100g — balancing negatives (energy, sugars, saturated fat, sodium) against positives (fibre, protein, fruit &amp; vegetables). Developed in France, now recommended across the EU.</div></div>
-      <div class="modal-row"><div class="modal-row-label">Is it mandatory?</div><div>No — Nutri-Score is optional in the EU. Brands choose to display it. If a product doesn't show it, that itself can be informative.</div></div>
-    `;
-    askBtn.onclick = () => { closeScoreModalDirect(); prefillAI(d.aiQ); };
-
-  } else if (type === 'nova') {
-    const d = NOVA_DATA[value];
-    if (!d) return;
-
-    const novaColors = { 1:'#038141', 2:'#85bb2f', 3:'#fecb02', 4:'#e63e11' };
-    const scaleHTML = [1,2,3,4].map(n => `
-      <span style="
-        display:inline-flex; align-items:center; justify-content:center;
-        width:${n == value ? '36px' : '28px'}; height:${n == value ? '36px' : '28px'};
-        border-radius:50%; background:${novaColors[n]};
-        color:${n === 3 ? '#333' : 'white'};
-        font-weight:800; font-size:${n == value ? '16px' : '13px'};
-        opacity:${n == value ? '1' : '0.35'};
-      ">${n}</span>
-    `).join('');
-
-    gradeEl.textContent   = `NOVA ${value}`;
-    gradeEl.className     = `modal-ecode ${d.colorClass}`;
-    titleEl.textContent   = d.label;
-    subEl.textContent     = 'EU food processing classification';
-    bodyEl.innerHTML = `
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">${scaleHTML}</div>
-      <div class="modal-row"><div class="modal-row-label">What it means</div><div>${d.summary}</div></div>
-      <div class="modal-row"><div class="modal-row-label">Context</div><div>${d.detail}</div></div>
-      <div class="modal-row"><div class="modal-row-label">How it works</div><div>NOVA was developed by Brazilian researchers and classifies foods by the extent and purpose of processing — not by nutrients. It's widely used by EFSA and WHO researchers to study diet and disease.</div></div>
-    `;
-    askBtn.onclick = () => { closeScoreModalDirect(); prefillAI(d.aiQ); };
+async function askAI(){
+  const input=document.getElementById('ai-input');
+  const btn=document.getElementById('ai-btn');
+  const msgs=document.getElementById('ai-messages');
+  const q=input.value.trim();
+  if(!q)return;
+  msgs.innerHTML+='<div class="ai-msg user-msg"><strong>You:</strong> '+q+'</div>';
+  input.value=''; btn.disabled=true; btn.textContent='...';
+  const loadId='ai-'+Date.now();
+  msgs.innerHTML+='<div class="ai-msg" id="'+loadId+'"><span class="spinner"></span> Thinking...</div>';
+  msgs.scrollTop=msgs.scrollHeight;
+  try{
+    const res=await fetch(CLAUDE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',max_tokens:1000,
+      system:'You are a friendly EU food safety expert inside FoodGuard. Help consumers understand food safety topics: RASFF recalls, food additives (E-numbers), allergens, Nutri-Score, NOVA groups. Keep answers to 3-5 sentences, clear and jargon-free. Mention EFSA where relevant.',
+      messages:[{role:'user',content:q}]
+    })});
+    const data=await res.json();
+    const answer=data.content?.[0]?.text||'Sorry, no response. Please try again.';
+    document.getElementById(loadId).innerHTML='<strong>FoodGuard AI:</strong> '+answer;
+  }catch(err){
+    document.getElementById(loadId).innerHTML='<strong>FoodGuard AI:</strong> Sorry, the AI assistant is unavailable right now.';
   }
-
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  btn.disabled=false; btn.textContent='Ask'; msgs.scrollTop=msgs.scrollHeight;
 }
 
-function prefillAI(question) {
-  const aiInput = document.getElementById('ai-input');
-  aiInput.value = question;
-  aiInput.focus();
-  document.querySelector('.two-col').scrollIntoView({ behavior:'smooth', block:'center' });
-}
-
-function closeScoreModal(e) {
-  if (e.target === document.getElementById('score-modal')) closeScoreModalDirect();
-}
-function closeScoreModalDirect() {
-  document.getElementById('score-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-// ── AI Assistant ─────────────────────────────────────────────────────────────
-async function askAI() {
-  const input = document.getElementById('ai-input');
-  const btn   = document.getElementById('ai-btn');
-  const msgs  = document.getElementById('ai-messages');
-  const q = input.value.trim();
-  if (!q) return;
-
-  // Show user message
-  msgs.innerHTML += `<div class="ai-msg user-msg"><strong>You:</strong> ${q}</div>`;
-  input.value = '';
-  btn.disabled = true;
-  btn.textContent = '…';
-
-  // Show loading
-  const loadId = 'ai-load-' + Date.now();
-  msgs.innerHTML += `<div class="ai-msg" id="${loadId}"><span class="spinner"></span> Thinking…</div>`;
-  msgs.scrollTop = msgs.scrollHeight;
-
-  try {
-    const res = await fetch(CLAUDE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: `You are a friendly EU food safety expert assistant inside a consumer dashboard called FoodGuard. 
-Help people understand food safety topics: EU recalls (RASFF), food additives (E-numbers), allergens, Nutri-Score, NOVA groups, and ingredient safety.
-Keep answers concise (3-5 sentences max), clear, and consumer-friendly. No jargon. If asked about a specific additive, explain what it is and any EU safety status.
-Always mention if something is regulated/approved by EFSA (European Food Safety Authority).`,
-        messages: [{ role: 'user', content: q }]
-      })
-    });
-
-    const data = await res.json();
-    const answer = data.content?.[0]?.text || 'Sorry, I could not get a response. Please try again.';
-    document.getElementById(loadId).innerHTML = `<strong>FoodGuard AI:</strong> ${answer}`;
-
-  } catch(err) {
-    document.getElementById(loadId).innerHTML = `<strong>FoodGuard AI:</strong> Sorry, the AI assistant isn't available right now. Please try again later.`;
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Ask';
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-// ── Enter key for search ──────────────────────────────────────────────────────
-document.getElementById('search-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') searchProduct();
-});
-
-// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')searchProduct();});
 loadStats();
 loadAlerts();
 </script>
