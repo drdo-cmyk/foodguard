@@ -331,7 +331,7 @@ async function searchProduct(){
   result.innerHTML='<div class="product-card"><div class="loading-row"><span class="spinner"></span> Searching...</div></div>';
   try{
     const url='https://world.openfoodfacts.net/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=5&fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text';
-    const res=await fetch(url,{headers:{'User-Agent':'FoodGuard/1.0'}});
+    const res=await fetch(url);
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
     const product=(data.products||[]).find(p=>p.product_name&&p.product_name.trim());
