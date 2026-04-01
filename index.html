@@ -650,8 +650,8 @@ const CAUTION_ADDITIVES = new Set([
 
 // ── Additive database ─────────────────────────────────────────────────────────
 const ADDITIVE_DB = {
-  'e102': { name:'Tartrazine', category:'Colour', purpose:'Yellow colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'EU mandates "may have an adverse effect on activity and attention in children" on packaging. Linked to hyperactivity in some studies.', foundIn:'Soft drinks, sweets, crisps, pickles, mustard', risk:'danger' },
-  'e104': { name:'Quinoline Yellow', category:'Colour', purpose:'Greenish-yellow colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Part of the "Southampton Six" azo dyes. EU requires hyperactivity warning on products containing it.', foundIn:'Smoked fish, scotch eggs, some soft drinks', risk:'danger' },
+  'e102': { name:'Tartrazine', category:'Colour', purpose:'Yellow colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'EU mandates a hyperactivity warning on packaging. Linked to adverse effects on activity and attention in children in some studies.', foundIn:'Soft drinks, sweets, crisps, pickles, mustard', risk:'danger' },
+  'e104': { name:'Quinoline Yellow', category:'Colour', purpose:'Greenish-yellow colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Part of the Southampton Six azo dyes. EU requires hyperactivity warning on products containing it.', foundIn:'Smoked fish, scotch eggs, some soft drinks', risk:'danger' },
   'e110': { name:'Sunset Yellow FCF', category:'Colour', purpose:'Orange-yellow colouring', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six dye. Associated with hyperactivity in children. Banned in Norway and Finland.', foundIn:'Orange squash, apricot jam, lemon curd, sweets', risk:'danger' },
   'e122': { name:'Carmoisine', category:'Colour', purpose:'Red colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in several non-EU countries. Potential allergen for aspirin-sensitive individuals.', foundIn:'Jams, sweets, marzipan, glacé cherries', risk:'danger' },
   'e124': { name:'Ponceau 4R', category:'Colour', purpose:'Red colouring agent', euStatusLabel:'Approved — warning label required in EU', euStatus:'restricted', flagReason:'Southampton Six. Banned in USA, Norway and Finland. Linked to hyperactivity.', foundIn:'Canned strawberries, seafood dressing, tinned fruit', risk:'danger' },
@@ -721,7 +721,7 @@ function openAdditiveModal(eCode) {
     nameEl.textContent    = 'Food additive';
     catEl.textContent     = 'Not in local database — tap Ask AI for details';
     purposeEl.textContent = 'This additive is approved for use in the EU.';
-    statusEl.innerHTML    = '<span class="modal-status-pill approved">Approved in EU</span>';
+    statusEl.innerHTML    = `<span class="modal-status-pill approved">Approved in EU</span>`;
     reasonEl.textContent  = 'Not specifically flagged — considered low concern.';
     foundInEl.textContent = 'Varies by product.';
     askBtn.onclick = () => {
@@ -904,7 +904,7 @@ const NUTRI_DATA = {
 
 const NOVA_DATA = {
   1: { colorClass:'safe',   label:'Unprocessed or minimally processed', summary:'Foods in their natural state or with minimal alteration — drying, freezing, pasteurising. Nothing artificial added. Examples: fresh fruit, eggs, plain meat, milk, plain nuts.', detail:'This is the gold standard. These foods are as close to nature as possible. Eat as much of these as you like.', aiQ:'What are good examples of NOVA 1 foods and why are they the healthiest?' },
-  2: { colorClass:'safe',   label:'Processed culinary ingredients',     summary:'Substances extracted from nature and used in cooking — not eaten alone. Examples: olive oil, butter, flour, sugar, salt, honey, vinegar.', detail:'These are the building blocks of cooking. They're not harmful in themselves, but are used to prepare NOVA 1 foods. The processing is simple and functional.', aiQ:'What is the difference between NOVA 1 and NOVA 2 foods?' },
+  2: { colorClass:'safe',   label:'Processed culinary ingredients',     summary:'Substances extracted from nature and used in cooking — not eaten alone. Examples: olive oil, butter, flour, sugar, salt, honey, vinegar.', detail:'These are the building blocks of cooking. Not harmful in themselves, but are used to prepare NOVA 1 foods. The processing is simple and functional.', aiQ:'What is the difference between NOVA 1 and NOVA 2 foods?' },
   3: { colorClass:'caution',label:'Processed foods',                    summary:'Foods made by adding salt, sugar, oil, or other NOVA 2 ingredients to NOVA 1 foods. Examples: canned fish, cheese, cured ham, smoked meat, tinned vegetables, freshly baked bread.', detail:'Processing here serves a clear purpose — preservation, taste, or safety. These foods are fine as part of a balanced diet, but check the label for salt and sugar content.', aiQ:'What makes a food NOVA 3 and how is it different from ultra-processed?' },
   4: { colorClass:'danger', label:'Ultra-processed foods',              summary:'Industrial formulations made mostly from cheap ingredients and additives — colours, flavours, emulsifiers, preservatives, sweeteners. They typically contain ingredients you would never find in a home kitchen.', detail:'NOVA 4 foods are designed to be hyper-palatable and long-lasting. Research links high NOVA 4 consumption to obesity, type 2 diabetes, heart disease, and some cancers. The EU public health guidance recommends minimising these.', aiQ:'Why are ultra-processed NOVA 4 foods considered harmful and what should I eat instead?' },
 };
@@ -943,7 +943,7 @@ function openScoreModal(type, value) {
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">${scaleHTML}</div>
       <div class="modal-row"><div class="modal-row-label">What it means</div><div>${d.summary}</div></div>
       <div class="modal-row"><div class="modal-row-label">How it works</div><div>Nutri-Score is calculated from a product's nutrients per 100g — balancing negatives (energy, sugars, saturated fat, sodium) against positives (fibre, protein, fruit &amp; vegetables). Developed in France, now recommended across the EU.</div></div>
-      <div class="modal-row"><div class="modal-row-label">Is it mandatory?</div><div>No — Nutri-Score is voluntary in the EU. Brands choose to display it. If a product doesn't show it, that itself can be informative.</div></div>
+      <div class="modal-row"><div class="modal-row-label">Is it mandatory?</div><div>No — Nutri-Score is optional in the EU. Brands choose to display it. If a product doesn't show it, that itself can be informative.</div></div>
     `;
     askBtn.onclick = () => { closeScoreModalDirect(); prefillAI(d.aiQ); };
 
