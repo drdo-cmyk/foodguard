@@ -381,6 +381,25 @@
       margin-top: 16px;
     }
 
+    /* ── Nutrition bars ── */
+    .nutri-toggle { display:flex; gap:6px; margin-bottom:14px; margin-top:4px; }
+    .nutri-toggle-btn { padding:4px 14px; font-size:12px; font-weight:600; border-radius:20px; border:1px solid var(--border); background:var(--white); color:var(--muted); cursor:pointer; transition:all .15s; }
+    .nutri-toggle-btn.active { background:var(--green); color:#fff; border-color:var(--green); }
+    .nbar-row { margin-bottom:12px; }
+    .nbar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+    .nbar-label { font-size:13px; font-weight:600; color:var(--text); }
+    .nbar-value { font-size:13px; color:var(--muted); }
+    .nbar-badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; margin-left:6px; vertical-align:middle; }
+    .nbar-badge.low  { background:var(--green-l); color:var(--green); }
+    .nbar-badge.mod  { background:var(--amber-l); color:var(--amber); }
+    .nbar-badge.high { background:var(--red-l);   color:var(--red); }
+    .nbar-track { height:8px; border-radius:4px; background:var(--gray-l); overflow:hidden; }
+    .nbar-fill  { height:100%; border-radius:4px; transition:width .5s ease; }
+    .nbar-fill.low  { background:#639922; }
+    .nbar-fill.mod  { background:#EF9F27; }
+    .nbar-fill.high { background:#E24B4A; }
+    .nbar-guide { font-size:11px; color:var(--muted); margin-top:3px; }
+
     /* AI panel */
     .ai-panel {
       background: var(--white);
@@ -835,7 +854,7 @@ async function searchProduct() {
   result.innerHTML = `<div class="product-card"><div class="loading-row"><span class="spinner"></span> Searching for "${q}"…</div></div>`;
 
   try {
-    const url = `https://world.openfoodfacts.net/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text`;
+    const url = `https://world.openfoodfacts.net/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text,nutriments,nutrient_levels,serving_size`;
     const res = await fetch(url);
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -932,11 +951,123 @@ function renderProduct(p, container) {
       <div class="sub-label">Ingredients</div>
       <div style="font-size:13px;color:var(--gray);line-height:1.7;">${ingredients}</div>
 
+      ${renderNutritionBars(p)}
+
       <div style="margin-top:16px; font-size:12px; color:var(--muted);">
         Data from Open Food Facts · <a href="https://world.openfoodfacts.org/product/${encodeURIComponent(name)}" target="_blank" rel="noopener" style="color:var(--green);">View full product page</a>
       </div>
     </div>
   `;
+}
+
+// ── Nutrition bars ────────────────────────────────────────────────────────────
+// EU traffic light thresholds (per 100g) — official FSA/EU values
+const NUTRI_THRESHOLDS = {
+  sugars:          { low:5,    high:22.5, max:60,  unit:'g',    label:'Sugar' },
+  fat:             { low:3,    high:17.5, max:40,  unit:'g',    label:'Fat' },
+  'saturated-fat': { low:1.5,  high:5,    max:15,  unit:'g',    label:'Saturated fat' },
+  salt:            { low:0.3,  high:1.5,  max:3,   unit:'g',    label:'Salt' },
+  'energy-kcal':   { low:80,   high:400,  max:900, unit:'kcal', label:'Calories' },
+};
+
+// nutrient_levels from API uses these keys with values 'low'/'moderate'/'high'
+const LEVEL_MAP = { low:'low', moderate:'mod', high:'high' };
+
+function getNutrientLevel(key, value100g, apiLevels) {
+  // prefer API pre-computed level
+  const apiKey = key === 'energy-kcal' ? null : key; // API has no energy level
+  if (apiKey && apiLevels && apiLevels[apiKey]) {
+    return LEVEL_MAP[apiLevels[apiKey]] || computeLevel(key, value100g);
+  }
+  return computeLevel(key, value100g);
+}
+
+function computeLevel(key, value) {
+  const t = NUTRI_THRESHOLDS[key];
+  if (!t || value == null) return null;
+  if (value <= t.low)  return 'low';
+  if (value <= t.high) return 'mod';
+  return 'high';
+}
+
+function levelLabel(l) {
+  return l === 'low' ? 'Low' : l === 'mod' ? 'Moderate' : 'High';
+}
+
+function barWidth(key, value) {
+  const t = NUTRI_THRESHOLDS[key];
+  if (!t || value == null) return 0;
+  return Math.min(100, Math.round((value / t.max) * 100));
+}
+
+function renderNutritionBars(p) {
+  const n = p.nutriments;
+  if (!n) return '';
+
+  const levels = p.nutrient_levels || {};
+  const serving = p.serving_size || null;
+
+  // Build rows for per-100g and per-serving
+  const keys = Object.keys(NUTRI_THRESHOLDS);
+  const hasServing = serving && keys.some(k => n[k + '_serving'] != null);
+
+  function buildBars(mode) {
+    return keys.map(key => {
+      const t = NUTRI_THRESHOLDS[key];
+      const val100 = n[key + '_100g'] ?? n[key];
+      const valServ = n[key + '_serving'];
+      const val = mode === 'serving' && valServ != null ? valServ : val100;
+
+      if (val == null) return '';
+
+      const level = getNutrientLevel(key, val100, levels); // always classify from per-100g
+      if (!level) return '';
+
+      const width = barWidth(key, mode === 'serving' && valServ != null ? valServ : val100);
+      const displayVal = parseFloat(val.toFixed(1));
+      const guide = mode === '100g'
+        ? `EU guide per 100g: low &lt;${t.low}${t.unit} · high &gt;${t.high}${t.unit}`
+        : `Per serving (${serving})`;
+      const aiQ = `Is ${displayVal}${t.unit} of ${t.label.toLowerCase()} per 100g considered ${levelLabel(level).toLowerCase()} for a food product?`;
+
+      return `<div class="nbar-row">
+        <div class="nbar-header">
+          <span class="nbar-label">${t.label}<span class="nbar-badge ${level}">${levelLabel(level)}</span></span>
+          <span class="nbar-value" style="cursor:pointer" onclick="prefillAI('${aiQ}')" title="Ask AI">${displayVal}${t.unit}</span>
+        </div>
+        <div class="nbar-track"><div class="nbar-fill ${level}" style="width:${width}%"></div></div>
+        <div class="nbar-guide">${guide}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const id = 'nb-' + Math.random().toString(36).slice(2,7);
+  const servingToggle = hasServing ? `
+    <button class="nutri-toggle-btn" id="${id}-100" onclick="toggleNutrition('${id}','100g')" >Per 100g</button>
+    <button class="nutri-toggle-btn" id="${id}-srv" onclick="toggleNutrition('${id}','serving')">Per serving (${serving})</button>` :
+    `<button class="nutri-toggle-btn active" style="cursor:default">Per 100g</button>`;
+
+  return `
+    <div class="sub-label">Nutrition</div>
+    <div class="nutri-toggle" id="${id}-toggle">${servingToggle}</div>
+    <div id="${id}-100g">${buildBars('100g')}</div>
+    ${hasServing ? `<div id="${id}-serving" style="display:none">${buildBars('serving')}</div>` : ''}
+  `;
+}
+
+function toggleNutrition(id, mode) {
+  const t100 = document.getElementById(id + '-100g');
+  const tsrv = document.getElementById(id + '-serving');
+  const b100 = document.getElementById(id + '-100');
+  const bsrv = document.getElementById(id + '-srv');
+  if (!t100) return;
+  if (mode === '100g') {
+    t100.style.display = ''; tsrv && (tsrv.style.display = 'none');
+    b100 && b100.classList.add('active'); bsrv && bsrv.classList.remove('active');
+  } else {
+    t100.style.display = 'none'; tsrv && (tsrv.style.display = '');
+    b100 && b100.classList.remove('active'); bsrv && bsrv.classList.add('active');
+  }
 }
 
 // ── Score modal (Nutri-Score / NOVA) ─────────────────────────────────────────
@@ -1369,7 +1500,7 @@ async function lookupBarcode(barcode) {
 
   try {
     const url = 'https://world.openfoodfacts.net/api/v2/product/' + barcode
-      + '?fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text';
+      + '?fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text,nutriments,nutrient_levels,serving_size';
     const res = await fetch(url);
 
     // Handle 404 as "not found" not as an error
@@ -1544,7 +1675,7 @@ async function lookupBarcode(barcode) {
 
   try {
     const url = 'https://world.openfoodfacts.net/api/v2/product/' + barcode
-      + '?fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text';
+      + '?fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text,nutriments,nutrient_levels,serving_size';
     const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
