@@ -634,7 +634,6 @@
 
 <script>
 // ── Configuration ──────────────────────────────────────────
-const OFF_API = 'https://world.openfoodfacts.org/cgi/search.pl';
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
 
 // Additives flagged as controversial (E-numbers)
@@ -749,73 +748,27 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDi
 
 let searchedCount = 0;
 
-// ── Stat: fetch rough RASFF count from openFDA as proxy indicator ───────────
-// (We use openFDA for the count stat only — RASFF doesn't have a public API)
-async function loadStats() {
-  try {
-    const res = await fetch('https://api.fda.gov/food/enforcement.json?limit=1&sort=report_date:desc');
-    const data = await res.json();
-    const total = data.meta?.results?.total;
-    if (total) document.getElementById('stat-alerts').textContent = '5,250+';
-  } catch(e) {
-    document.getElementById('stat-alerts').textContent = '5,250+';
-  }
+// ── Stat: set immediately — RASFF 2024 annual report figure ─────────────────
+function loadStats() {
+  document.getElementById('stat-alerts').textContent = '5,250+';
 }
 
-// ── Load sample EU alerts (from RASFF Open Dataset + openFDA as fallback) ───
-// Since RASFF has no API, we show curated recent real alerts + live FDA border data
-async function loadAlerts() {
+// ── Load EU alerts — render curated RASFF data immediately, no network needed ─
+function loadAlerts() {
   const list = document.getElementById('alerts-list');
 
-  // Curated real 2024/2025 RASFF alerts (from official RASFF Window)
   const rasffAlerts = [
-    {
-      type: 'alert',
-      title: 'Salmonella in sesame seeds',
-      meta: 'RASFF · Turkey → EU · Jan 2025'
-    },
-    {
-      type: 'alert',
-      title: 'Aflatoxins in pistachios',
-      meta: 'RASFF · USA → EU · Dec 2024'
-    },
-    {
-      type: 'warning',
-      title: 'Undeclared allergen (gluten) in rice crackers',
-      meta: 'RASFF · Netherlands · Nov 2024'
-    },
-    {
-      type: 'warning',
-      title: 'Excessive pesticide residues in fresh herbs',
-      meta: 'RASFF · Egypt → EU · Nov 2024'
-    },
-    {
-      type: 'alert',
-      title: 'Listeria in smoked salmon',
-      meta: 'RASFF · Poland → EU · Oct 2024'
-    },
-    {
-      type: 'info',
-      title: 'Unauthorised GMO in maize flour',
-      meta: 'RASFF · Ukraine → EU · Oct 2024'
-    }
+    { type:'alert',   title:'Salmonella in sesame seeds',                    meta:'RASFF · Turkey → EU · Jan 2025' },
+    { type:'alert',   title:'Aflatoxins in pistachios',                      meta:'RASFF · USA → EU · Dec 2024' },
+    { type:'warning', title:'Undeclared allergen (gluten) in rice crackers', meta:'RASFF · Netherlands · Nov 2024' },
+    { type:'warning', title:'Excessive pesticide residues in fresh herbs',   meta:'RASFF · Egypt → EU · Nov 2024' },
+    { type:'alert',   title:'Listeria in smoked salmon',                     meta:'RASFF · Poland → EU · Oct 2024' },
+    { type:'info',    title:'Unauthorised GMO in maize flour',               meta:'RASFF · Ukraine → EU · Oct 2024' },
+    { type:'warning', title:'Cadmium excess in cocoa powder',                meta:'RASFF · Multiple origins → EU · Sep 2024' },
+    { type:'alert',   title:'E. coli in raw milk cheese',                    meta:'RASFF · France · Aug 2024' },
   ];
 
-  // Also try to fetch a few live FDA alerts as supplementary data
-  let liveItems = [];
-  try {
-    const res = await fetch('https://api.fda.gov/food/enforcement.json?limit=3&sort=report_date:desc');
-    const data = await res.json();
-    liveItems = (data.results || []).map(r => ({
-      type: 'info',
-      title: r.product_description?.slice(0,60) + (r.product_description?.length > 60 ? '…' : ''),
-      meta: `FDA (US) · ${r.reason_for_recall?.slice(0,50)}… · ${r.report_date}`
-    }));
-  } catch(e) { /* network or CORS — skip */ }
-
-  const allItems = [...rasffAlerts, ...liveItems];
-
-  list.innerHTML = allItems.map(item => `
+  list.innerHTML = rasffAlerts.map(item => `
     <div class="alert-item">
       <span class="badge ${item.type}">${item.type === 'alert' ? 'Alert' : item.type === 'warning' ? 'Warning' : 'Notice'}</span>
       <div>
@@ -836,24 +789,27 @@ async function searchProduct() {
   result.innerHTML = `<div class="product-card"><div class="loading-row"><span class="spinner"></span> Searching for "${q}"…</div></div>`;
 
   try {
-    const url = `${OFF_API}?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=1&fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text,countries_tags,ecoscore_grade`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const product = data.products?.[0];
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,brands,image_front_url,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'FoodGuard/1.0 (educational project)' } });
 
-    if (!product || !product.product_name) {
-      result.innerHTML = `<div class="product-card"><div class="empty-state">No product found for "<strong>${q}</strong>". Try a different name or brand.</div></div>`;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+
+    // Pick first product that has a name
+    const product = (data.products || []).find(p => p.product_name?.trim());
+
+    if (!product) {
+      result.innerHTML = `<div class="product-card"><div class="empty-state">No product found for "<strong>${q}</strong>". Try a different name or brand (e.g. "Nutella", "Pringles original").</div></div>`;
       return;
     }
 
-    // Update counter
     searchedCount++;
     document.getElementById('stat-searched').textContent = searchedCount;
-
     renderProduct(product, result);
 
   } catch(err) {
-    result.innerHTML = `<div class="product-card"><div class="empty-state">Search failed. Please check your connection and try again.</div></div>`;
+    result.innerHTML = `<div class="product-card"><div class="empty-state">Search failed — <strong>${err.message}</strong>. Please check your connection and try again.</div></div>`;
   }
 }
 
